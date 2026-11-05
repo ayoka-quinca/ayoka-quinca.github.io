@@ -36,6 +36,7 @@ Le serveur sert l'application et la synchronisation sur http://localhost:8080. I
 | 5 | [Maintenance et évolutions](docs/05-maintenance-evolutions.md) | Routines, sauvegardes, mises à jour, limites connues, feuille de route V2.1 → V5 |
 | 6 | [Fiches mémo](docs/06-fiches-memo.md) | Une page par rôle, à imprimer |
 | 7 | [Comment ça marche](docs/07-comment-ca-marche.md) | Produits, emplacements, inventaire, fournisseurs : les règles expliquées |
+| 8 | [Mise en ligne sur GitHub](docs/08-publication-github.md) | Pourquoi « GitHub Actions », ce qui se passe à chaque modification |
 
 Historique des versions : [CHANGELOG.md](CHANGELOG.md).
 
