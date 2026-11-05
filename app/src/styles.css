@@ -170,7 +170,8 @@ p { margin: 0; }
 .card.tint-danger { background: var(--danger-soft); border-color: transparent; box-shadow: none; }
 .card.dark { background: var(--ink); color: var(--on-ink); border-color: transparent; }
 .card.dark .muted, .card.dark .eyebrow { color: color-mix(in srgb, var(--on-ink) 60%, transparent); }
-a.card, button.card { display: block; text-align: left; cursor: pointer; transition: transform .15s var(--ease), box-shadow .15s; }
+a.card:not(.stack):not(.row), button.card:not(.stack):not(.row) { display: block; }
+a.card, button.card { text-align: left; cursor: pointer; transition: transform .15s var(--ease), box-shadow .15s; }
 a.card:hover, button.card:hover { box-shadow: var(--shadow-2); }
 a.card:active, button.card:active { transform: scale(.99); }
 .section-title { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; padding: 0 2px; }
