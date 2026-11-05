@@ -35,9 +35,11 @@ jobs:
       - name: Construire
         working-directory: app
         run: |
-          # Dépôt « xxx.github.io » → racine ; sinon → /nom-du-depot/
+          # Site à la racine seulement si le dépôt s'appelle « <propriétaire>.github.io » ;
+          # sinon GitHub le publie sous /nom-du-depot/.
+          OWNER="${GITHUB_REPOSITORY_OWNER,,}"
           REPO="${GITHUB_REPOSITORY#*/}"
-          if [[ "$REPO" == *.github.io ]]; then export VITE_BASE=/; else export VITE_BASE="/$REPO/"; fi
+          if [[ "${REPO,,}" == "$OWNER.github.io" ]]; then export VITE_BASE=/; else export VITE_BASE="/$REPO/"; fi
           echo "Publication sous $VITE_BASE"
           npm run build
           # Les liens directs (ex : /stock) doivent ouvrir l'application, pas une erreur 404.
