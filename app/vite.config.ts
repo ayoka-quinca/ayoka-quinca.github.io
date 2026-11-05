@@ -6,6 +6,8 @@ const artifact = process.env.VITE_ARTIFACT === '1';
 
 export default defineConfig({
   base: artifact ? './' : '/',
+  // Lien de test : polices intégrées au CSS (aucun fichier externe à charger).
+  build: { assetsInlineLimit: artifact ? 10_000_000 : 4096 },
   plugins: [
     react(),
     !artifact && VitePWA({
