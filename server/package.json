@@ -1,0 +1,9 @@
+{
+  "name": "ayoka-quinca-server",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Serveur de synchronisation AYOKA QUINCA (Node.js >= 22.13, aucune dépendance)",
+  "engines": { "node": ">=22.13" },
+  "scripts": { "start": "node index.mjs" }
+}
