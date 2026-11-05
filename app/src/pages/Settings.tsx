@@ -1,34 +1,56 @@
 import { useEffect, useRef, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { Building2, Users, Tags, CloudUpload, HardDriveDownload, FileSpreadsheet, History, Plus, Trash2 } from 'lucide-react';
+import { Building2, Users, Tags, CloudUpload, HardDriveDownload, FileSpreadsheet, History, Plus, Trash2, ChevronRight, Type, AlertTriangle } from 'lucide-react';
 import { db, write, uid, getSetting, setSetting, DEFAULT_COMPANY, type Company, type Role, type User } from '../db';
 import { createUser, setPin, ROLE_LABEL } from '../domain/auth';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { when } from '../domain/format';
 import { csvTemplate, download, exportBackup, importBackup, importProductsCsv } from '../domain/backup';
 import { onSync, syncNow, type SyncConfig, type SyncState } from '../domain/sync';
 import { wipeAll } from '../domain/seed';
 import { useCategories, useSession, useUsers } from '../ui/hooks';
-import { Avatar, Confirm, Field, Sheet, TopBar, useToast } from '../ui/kit';
+import { Avatar, Confirm, Errors, Field, Sheet, TopBar, useToast, useAction } from '../ui/kit';
 import { TextSize } from './More';
 
-const COLORS = ['#0B6E4F', '#B4540A', '#2F6FB0', '#7B4FB0', '#9F1239', '#0E7490'];
+const COLORS = ['#12804C', '#C2410C', '#2459C9', '#7B4FB0', '#9F1239', '#0E7490'];
 
+const SECTIONS = [
+  { k: 'equipe', icon: Users, t: "Équipe et codes d'accès", d: 'Comptes, rôles, codes secrets', C: () => <Team /> },
+  { k: 'entreprise', icon: Building2, t: 'Entreprise', d: 'En-tête des tickets et proformas, IFU, RCCM, TVA', C: () => <CompanyCard /> },
+  { k: 'categories', icon: Tags, t: 'Catégories', d: 'Familles de produits', C: () => <CategoriesCard /> },
+  { k: 'import', icon: FileSpreadsheet, t: 'Importer les produits', d: 'Toute la liste depuis Excel', C: () => <ImportCard /> },
+  { k: 'synchro', icon: CloudUpload, t: 'Synchronisation', d: 'Relier téléphones et ordinateur', C: () => <SyncCard /> },
+  { k: 'sauvegarde', icon: HardDriveDownload, t: 'Sauvegarde', d: 'Télécharger ou restaurer les données', C: () => <BackupCard /> },
+  { k: 'affichage', icon: Type, t: 'Affichage', d: 'Taille du texte', C: () => <TextSize /> },
+  { k: 'journal', icon: History, t: "Journal d'activité", d: 'Qui a fait quoi, et quand', C: () => <JournalLink /> },
+  { k: 'avance', icon: AlertTriangle, t: 'Zone sensible', d: 'Effacer les données de cet appareil', C: () => <Danger /> },
+];
+
+/** Paramètres façon réglages iPhone : une liste de rubriques, chaque rubrique sur son propre écran. */
 export default function SettingsPage() {
+  const [params, setParams] = useSearchParams();
+  const k = params.get('s');
+  const cur = SECTIONS.find((x) => x.k === k);
+  const desktop = typeof window !== 'undefined' && window.matchMedia('(min-width: 960px)').matches;
+  const shown = cur ?? (desktop ? SECTIONS[0] : undefined);
+  const list = (
+    <div className="list">
+      {SECTIONS.map((x) => (
+        <button key={x.k} className="item" onClick={() => setParams({ s: x.k }, { replace: !!k })} style={shown?.k === x.k && desktop ? { background: 'var(--surface-2)' } : undefined}>
+          <span className="glyph sm" style={x.k === 'avance' ? { background: 'var(--danger-soft)', color: 'var(--danger)' } : undefined}><x.icon size={18} /></span>
+          <div className="grow"><div className="title">{x.t}</div><div className="sub">{x.d}</div></div>
+          <ChevronRight size={18} className="chev" />
+        </button>
+      ))}
+    </div>
+  );
   return (
     <>
-      <TopBar title="Paramètres" />
+      <TopBar title={cur && !desktop ? cur.t : 'Paramètres'} back={cur && !desktop ? '/parametres' : undefined} />
       <main className="main">
-        <div className="grid-auto" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', alignItems: 'start' }}>
-          <Team />
-          <CompanyCard />
-          <SyncCard />
-          <BackupCard />
-          <ImportCard />
-          <CategoriesCard />
-          <TextSize />
-          <JournalLink />
-          <Danger />
+        <div className="settings-layout">
+          {(desktop || !cur) && <div className="side">{list}</div>}
+          {shown && <div className="stack" style={{ maxWidth: 720 }}>{desktop && <h2 style={{ fontSize: '1.4rem' }}>{shown.t}</h2>}<shown.C /></div>}
         </div>
       </main>
     </>
@@ -43,10 +65,18 @@ function Team() {
   const [name, setName] = useState('');
   const [role, setRole] = useState<Role>('caissiere');
   const [pin, setPinV] = useState('');
-  const open = (u: User | 'new') => { setEdit(u); setName(u === 'new' ? '' : u.name); setRole(u === 'new' ? 'caissiere' : u.role); setPinV(''); };
+  const [tried, setTried] = useState(false);
+  const run = useAction();
+  const open = (u: User | 'new') => { setEdit(u); setName(u === 'new' ? '' : u.name); setRole(u === 'new' ? 'caissiere' : u.role); setPinV(''); setTried(false); };
+  const errs = [
+    !name.trim() && 'Indiquez le prénom.',
+    edit === 'new' && pin.length !== 4 && 'Choisissez un code secret de 4 chiffres.',
+    edit !== 'new' && pin.length > 0 && pin.length !== 4 && 'Le nouveau code doit avoir 4 chiffres (ou laissez vide pour garder l\u2019ancien).',
+    users.some((u) => u.name.trim().toLowerCase() === name.trim().toLowerCase() && (edit === 'new' || u.id !== edit?.id)) && 'Une personne porte déjà ce prénom : ajoutez une initiale pour les distinguer.',
+    edit !== 'new' && edit?.id !== me.id && role !== 'responsable' && edit?.role === 'responsable' && users.filter((u) => u.role === 'responsable' && u.active).length < 2 && 'Il doit rester au moins une responsable.',
+  ].filter(Boolean) as string[];
   return (
-    <div className="card stack">
-      <div className="row"><Users size={20} /><h3 className="grow">Équipe et codes d'accès</h3></div>
+    <div className="stack">
       <div className="list">
         {users.map((u) => (
           <button key={u.id} className="item" onClick={() => open(u)} style={!u.active ? { opacity: .5 } : undefined}>
@@ -67,13 +97,19 @@ function Team() {
             <Field label={edit === 'new' ? 'Code secret (4 chiffres)' : 'Nouveau code secret (laisser vide pour garder)'}>
               <input className="input lg num" inputMode="numeric" maxLength={4} type="password" value={pin} onChange={(e) => setPinV(e.target.value.replace(/\D/g, ''))} />
             </Field>
-            <button className="btn primary lg" disabled={!name.trim() || (edit === 'new' ? pin.length !== 4 : pin.length > 0 && pin.length !== 4)} onClick={async () => {
-              if (edit === 'new') { await createUser(name.trim(), role, pin, COLORS[users.length % COLORS.length]); }
-              else {
-                await db.transaction('rw', db.users, db.outbox, () => write('users', { ...edit, name: name.trim(), role }));
-                if (pin) await setPin({ ...edit, name: name.trim(), role }, pin);
-              }
-              toast({ text: 'Enregistré' }); setEdit(null);
+            {tried && <Errors list={errs} />}
+            <button className="btn primary lg" onClick={async () => {
+              setTried(true);
+              if (errs.length) return;
+              const ok = await run(async () => {
+                if (edit === 'new') { await createUser(name.trim(), role, pin, COLORS[users.length % COLORS.length]); }
+                else {
+                  await db.transaction('rw', db.users, db.outbox, () => write('users', { ...edit, name: name.trim(), role }));
+                  if (pin) await setPin({ ...edit, name: name.trim(), role }, pin);
+                }
+                return true;
+              }, edit === 'new' ? `${name.trim()} peut maintenant se connecter` : 'Modifications enregistrées');
+              if (ok) setEdit(null);
             }}>Enregistrer</button>
             {edit !== 'new' && edit.id !== me.id && (
               <button className="btn ghost danger-t" onClick={async () => {
@@ -96,7 +132,6 @@ function CompanyCard() {
   const f = (k: 'name' | 'owner' | 'address' | 'phone' | 'email' | 'ifu' | 'rccm' | 'footer', label: string) => <Field label={label}><input id={`co-${k}`} className="input" value={c[k] ?? ''} onChange={(e) => setC({ ...c, [k]: e.target.value })} /></Field>;
   return (
     <div className="card stack">
-      <div className="row"><Building2 size={20} /><h3>Entreprise (en-tête des factures)</h3></div>
       {f('name', 'Nom')}{f('address', 'Adresse')}{f('phone', 'Téléphone')}{f('email', 'E-mail')}{f('owner', 'Responsable (signature)')}{f('ifu', 'N° IFU')}{f('rccm', 'N° RCCM')}{f('footer', 'Message en bas du ticket')}
       <label className="row" style={{ gap: 10 }}><input id="co-vat" type="checkbox" checked={!!c.vat} onChange={(e) => setC({ ...c, vat: e.target.checked })} style={{ width: 22, height: 22 }} />Assujetti à la TVA (18 %) : afficher la TVA sur les proformas</label>
       <button className="btn primary" onClick={async () => { await setSetting('company', c); toast({ text: 'Enregistré' }); }}>Enregistrer</button>
@@ -111,7 +146,6 @@ function SyncCard() {
   useEffect(() => { getSetting<SyncConfig | null>('sync', null).then((c) => c && setCfg(c)); return onSync(setSt) as () => void; }, []);
   return (
     <div className="card stack">
-      <div className="row"><CloudUpload size={20} /><h3>Synchronisation entre appareils</h3></div>
       <div className="small muted">Relie ce téléphone / ordinateur au serveur de la boutique. Sans serveur, les données restent uniquement sur cet appareil.</div>
       <Field label="Adresse du serveur"><input className="input" value={cfg.url} placeholder="https://ayoka.exemple.bj" onChange={(e) => setCfg({ ...cfg, url: e.target.value.trim() })} /></Field>
       <Field label="Clé de la boutique"><input className="input" type="password" value={cfg.token} onChange={(e) => setCfg({ ...cfg, token: e.target.value.trim() })} /></Field>
@@ -133,7 +167,6 @@ function BackupCard() {
   const last = useLiveQuery(() => db.settings.get('lastBackup'), []);
   return (
     <div className="card stack">
-      <div className="row"><HardDriveDownload size={20} /><h3>Sauvegarde</h3></div>
       <div className="small muted">Dernière sauvegarde manuelle : {last?.value ? when(last.value as number) : 'jamais'}. Envoyez le fichier sur WhatsApp ou Google Drive pour le garder à l'abri.</div>
       <button className="btn primary" onClick={async () => { download(await exportBackup(), `sauvegarde-ayoka-${new Date().toISOString().slice(0, 10)}.json`); await setSetting('lastBackup', Date.now()); }}>Télécharger une sauvegarde</button>
       <input ref={ref} type="file" accept="application/json" hidden onChange={(e) => e.target.files?.[0] && setFile(e.target.files[0])} />
@@ -151,7 +184,6 @@ function ImportCard() {
   const [res, setRes] = useState<{ created: number; errors: string[] } | null>(null);
   return (
     <div className="card stack">
-      <div className="row"><FileSpreadsheet size={20} /><h3>Importer la liste des produits</h3></div>
       <div className="small muted">Remplissez le modèle dans Excel (une ligne par produit, avec le stock compté), enregistrez en CSV, puis importez-le ici.</div>
       <button className="btn" onClick={() => download(csvTemplate(), 'modele-produits.csv')}>Télécharger le modèle</button>
       <input ref={ref} type="file" accept=".csv,text/csv" hidden onChange={async (e) => { const f = e.target.files?.[0]; if (!f) return; const r = await importProductsCsv(await f.text(), user.id); setRes(r); toast({ text: `${r.created} produit(s) importé(s)` }); e.target.value = ''; }} />
@@ -167,7 +199,6 @@ function CategoriesCard() {
   const products = useLiveQuery(() => db.products.toArray(), []) ?? [];
   return (
     <div className="card stack">
-      <div className="row"><Tags size={20} /><h3>Catégories</h3></div>
       <div className="row-wrap">
         {list.map((c) => {
           const used = products.some((p) => p.categoryId === c.id);

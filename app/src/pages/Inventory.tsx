@@ -35,9 +35,14 @@ export default function InventoryPage() {
           <div className="small muted">Conseil : comptez une zone à la fois, de préférence avant l'ouverture ou après la fermeture.</div>
           <div className="grid-auto">
             {list.filter((l) => l.sellable).map((l) => (
-              <button key={l.id} className="action-tile" style={{ minHeight: 72, flexDirection: 'row', alignItems: 'center', borderLeft: `6px solid ${l.color}` }}
-                onClick={async () => { const inv = await startInventory(l.id, user.id); nav(`/inventaire/${inv.id}`); }}>
-                <span className="grow">{l.parentId ? `${map.get(l.parentId)?.name} · ${l.name}` : l.name}</span><ClipboardCheck />
+              <button key={l.id} className="card row" style={{ minHeight: 72, boxShadow: `inset 6px 0 0 ${l.color}, var(--shadow-1)`, fontWeight: 650 }}
+                onClick={async () => {
+                  // Un comptage déjà commencé dans cette zone est repris, pas dupliqué.
+                  const cur = running.find((i) => i.locationId === l.id);
+                  const inv = cur ?? await startInventory(l.id, user.id);
+                  nav(`/inventaire/${inv.id}`);
+                }}>
+                <span className="grow">{l.parentId ? `${map.get(l.parentId)?.name} · ${l.name}` : l.name}{running.some((i) => i.locationId === l.id) && <span className="badge warn" style={{ marginLeft: 8 }}>En cours</span>}</span><ClipboardCheck size={20} className="muted" />
               </button>
             ))}
           </div>

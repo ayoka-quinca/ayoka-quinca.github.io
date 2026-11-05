@@ -6,6 +6,7 @@ import { matches, money } from '../domain/format';
 import { createPurchase } from '../domain/ops';
 import { useLocations, useProducts, useSession, useSuppliers } from '../ui/hooks';
 import { Field, SearchBox, Sheet, Stepper, TopBar, useToast } from '../ui/kit';
+import { Errors, useAction } from '../ui/kit';
 
 /** Réception de marchandise : en 3 étapes (fournisseur → articles → valider). */
 export default function PurchaseForm() {
@@ -23,6 +24,14 @@ export default function PurchaseForm() {
   const [newSup, setNewSup] = useState(false);
   const [updateCost, setUpdateCost] = useState(true);
   const total = items.reduce((t, i) => t + i.qty * i.unitCost, 0);
+  const [tried, setTried] = useState(false);
+  const run = useAction();
+  const errs = [
+    !supplierId && 'Choisissez le fournisseur qui a livré (étape 1).',
+    !items.length && 'Ajoutez au moins un produit livré (étape 2).',
+    items.some((i) => i.qty <= 0) && 'Une quantité est à zéro : corrigez-la ou retirez la ligne.',
+    items.some((i) => !i.unitCost) && "Un prix d'achat est vide : indiquez le prix de la facture.",
+  ].filter(Boolean) as string[];
   const pmap = new Map(products.map((p) => [p.id, p]));
   const found = products.filter((p) => matches(p.name, q)).slice(0, 20);
   const setItem = (k: number, v: Partial<PurchaseItem>) => setItems(items.map((x, i) => (i === k ? { ...x, ...v } : x)));
@@ -67,9 +76,12 @@ export default function PurchaseForm() {
             <h2>3. Vérifier et valider</h2>
             <div className="row between"><span>Total de la facture</span><span className="big num">{money(total)}</span></div>
             <label className="row"><input type="checkbox" checked={updateCost} onChange={(e) => setUpdateCost(e.target.checked)} style={{ width: 22, height: 22 }} />Mettre à jour les prix d'achat des produits</label>
-            <button className="btn primary lg" disabled={!supplierId || !items.length || items.some((i) => i.qty <= 0)} onClick={async () => {
-              await createPurchase({ supplierId, invoiceNumber: invoice.trim() || undefined, items, userId: user.id, updateCost });
-              toast({ text: 'Réception enregistrée, stock mis à jour' }); nav('/achats', { replace: true });
+            {tried && <Errors list={errs} />}
+            <button className="btn primary lg" onClick={async () => {
+              setTried(true);
+              if (errs.length) return;
+              const ok = await run(async () => { await createPurchase({ supplierId, invoiceNumber: invoice.trim() || undefined, items, userId: user.id, updateCost }); return true; }, 'Réception enregistrée, le stock a été mis à jour');
+              if (ok) nav('/achats', { replace: true });
             }}>Valider · ajouter au stock</button>
           </div>
         </div>
@@ -95,6 +107,14 @@ export default function PurchaseForm() {
 
 export function SupplierSheet({ supplier, onClose, onSaved }: { supplier?: Supplier; onClose: () => void; onSaved?: (s: Supplier) => void }) {
   const [s, setS] = useState<Supplier>(supplier ?? { id: uid(), name: '', createdAt: Date.now(), updatedAt: 0 });
+  const [tried, setTried] = useState(false);
+  const run = useAction();
+  const all = useSuppliers();
+  const errs = [
+    !s.name.trim() && 'Indiquez le nom du fournisseur.',
+    all.some((x) => x.id !== s.id && x.name.trim().toLowerCase() === s.name.trim().toLowerCase()) && 'Ce fournisseur existe déjà dans la liste.',
+    s.phone && s.phone.replace(/\D/g, '').length < 8 && 'Le numéro de téléphone paraît incomplet (8 chiffres minimum).',
+  ].filter(Boolean) as string[];
   return (
     <Sheet title={supplier ? 'Modifier le fournisseur' : 'Nouveau fournisseur'} onClose={onClose}>
       <div className="stack">
@@ -102,7 +122,14 @@ export function SupplierSheet({ supplier, onClose, onSaved }: { supplier?: Suppl
         <Field label="Téléphone"><input className="input lg" inputMode="tel" value={s.phone ?? ''} onChange={(e) => setS({ ...s, phone: e.target.value })} /></Field>
         <Field label="Adresse"><input className="input lg" value={s.address ?? ''} onChange={(e) => setS({ ...s, address: e.target.value })} /></Field>
         <Field label="Notes"><textarea className="input" rows={2} value={s.notes ?? ''} onChange={(e) => setS({ ...s, notes: e.target.value })} /></Field>
-        <button className="btn primary lg" disabled={!s.name.trim()} onClick={async () => { await db.transaction('rw', db.suppliers, db.outbox, () => write('suppliers', s)); onSaved?.(s); onClose(); }}>Enregistrer</button>
+        {tried && <Errors list={errs} />}
+        {!supplier && <div className="small muted">Après l'enregistrement, vous pourrez indiquer les produits qu'il vous livre.</div>}
+        <button className="btn primary lg" onClick={async () => {
+          setTried(true);
+          if (errs.length) return;
+          const ok = await run(async () => { await db.transaction('rw', db.suppliers, db.outbox, () => write('suppliers', { ...s, name: s.name.trim() })); return true; }, supplier ? 'Fournisseur modifié' : 'Fournisseur ajouté');
+          if (ok) { onSaved?.(s); onClose(); }
+        }}>Enregistrer</button>
       </div>
     </Sheet>
   );

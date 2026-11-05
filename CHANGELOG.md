@@ -1,5 +1,20 @@
 # Historique des versions
 
+## 2.1.0 (novembre 2026)
+
+**Corrections**
+- Plan du magasin net : le texte se chevauchait à cause d'un espacement de lettres hérité. Aplats opaques, noms en haut des zones à étagères, liste des zones en grandes cartes, plan à faire glisser sur téléphone.
+- Paramètres : la grille débordait sur téléphone. Ils sont maintenant présentés comme les réglages d'un iPhone (liste de rubriques, une rubrique par écran ; liste + détail sur ordinateur).
+- Inventaire : les zones s'affichaient sans style. Un comptage en cours est repris au lieu d'être dupliqué.
+
+**Améliorations**
+- Fournisseurs : rattacher ou retirer les produits qu'ils livrent ; raccourci « Enregistrer une livraison ».
+- Inventaire : « Corriger » part du chiffre attendu, ajout d'un produit trouvé dans la zone, explications quand un inventaire validé n'est plus modifiable.
+- Fiche produit : dates d'ajout, de dernière réception et de dernière vente.
+- Messages d'erreur clairs partout (formulaires produit, fournisseur, réception, équipe, étagère) et filet de sécurité si un écran plante.
+- Écran de chargement animé avec le logo.
+- Mode clair uniquement.
+
 ## 2.0.0 (novembre 2026)
 
 **Design**

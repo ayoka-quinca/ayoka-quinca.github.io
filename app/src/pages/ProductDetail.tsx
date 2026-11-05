@@ -4,7 +4,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { ArrowRightLeft, Pencil, ShoppingCart, SlidersHorizontal, MapPin } from 'lucide-react';
 import { db, type Location, type MoveType, type Product } from '../db';
 import { can } from '../domain/auth';
-import { money, qty as fq, when, waLink } from '../domain/format';
+import { money, qty as fq, when, waLink, dateShort } from '../domain/format';
 import { adjust, transfer } from '../domain/ops';
 import { useLocations, useSession, useSuppliers, useUsers } from '../ui/hooks';
 import { Field, Sheet, Stepper, StockBadge, TopBar, ZoneTag, useToast } from '../ui/kit';
@@ -28,6 +28,8 @@ export default function ProductDetail() {
   const [sheet, setSheet] = useState<'move' | 'adjust' | null>(null);
   if (!p) return null;
   const total = rows.reduce((t, r) => t + r.qty, 0);
+  const lastIn = moves.find((m) => m.type === 'achat');
+  const lastOut = moves.find((m) => m.type === 'vente');
   const here = rows.filter((r) => r.qty !== 0);
   const highlight = new Set([p.locationId, ...here.map((r) => r.locationId)]);
   const sellNow = () => {
@@ -51,6 +53,13 @@ export default function ProductDetail() {
                 <StockBadge q={total} min={p.minStock} unit={p.unit} />
               </div>
               <div className="small muted">Alerte quand il reste {fq(p.minStock)} {p.unit} ou moins{p.dimensions && ` · ${p.dimensions}`}{p.ref && ` · Réf. ${p.ref}`}</div>
+              <div className="grid-3" style={{ borderTop: '1px solid var(--line)', paddingTop: 14 }}>
+                {[
+                  ['Ajouté le', dateShort(p.createdAt)],
+                  ['Dernière réception', lastIn ? dateShort(lastIn.at) : '—'],
+                  ['Dernière vente', lastOut ? dateShort(lastOut.at) : '—'],
+                ].map(([k, v]) => <div key={k}><div className="tiny muted" style={{ fontWeight: 600 }}>{k}</div><div className="small num" style={{ fontWeight: 650 }}>{v}</div></div>)}
+              </div>
               <div className="grid-2">
                 {can(user, 'vendre') && <button className="btn primary lg" onClick={sellNow}><ShoppingCart size={20} />Vendre</button>}
                 {can(user, 'deplacer_stock') && <button className="btn lg" onClick={() => setSheet('move')}><ArrowRightLeft size={20} />Déplacer</button>}

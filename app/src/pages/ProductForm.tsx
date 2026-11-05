@@ -4,7 +4,8 @@ import { Plus, Trash2, Archive } from 'lucide-react';
 import { db, write, uid, type PriceTier, type Product } from '../db';
 import { addMovements } from '../domain/ops';
 import { useCategories, useLocations, useSession, useSuppliers } from '../ui/hooks';
-import { Confirm, Field, TopBar, useToast } from '../ui/kit';
+import { Confirm, Errors, Field, TopBar, useToast, useAction } from '../ui/kit';
+import { useProducts } from '../ui/hooks';
 
 const UNITS = ['pièce', 'sac', 'barre', 'm²', 'mètre', 'feuille', 'kg', 'rouleau', 'carton', 'bidon', 'paquet', 'sachet'];
 
@@ -19,6 +20,9 @@ export default function ProductForm() {
   const [p, setP] = useState<Product | null>(null);
   const [initial, setInitial] = useState('');
   const [confirmArchive, setConfirmArchive] = useState(false);
+  const [tried, setTried] = useState(false);
+  const run = useAction();
+  const all = useProducts();
 
   useEffect(() => {
     if (id) db.products.get(id).then((x) => x && setP(x));
@@ -35,14 +39,26 @@ export default function ProductForm() {
   );
   const tiers = p.tiers ?? [];
   const setTier = (i: number, t: Partial<PriceTier>) => set('tiers', tiers.map((x, k) => (k === i ? { ...x, ...t } : x)));
-  const valid = p.name.trim() && p.salePrice > 0 && p.categoryId && p.locationId;
+  const errs = [
+    !p.name.trim() && 'Donnez un nom au produit (ex : Fer à béton 10 mm).',
+    all.some((x) => x.id !== p.id && x.name.trim().toLowerCase() === p.name.trim().toLowerCase()) && 'Un produit porte déjà ce nom : précisez la taille ou la marque.',
+    !(p.salePrice > 0) && 'Indiquez le prix de vente.',
+    p.purchasePrice > 0 && p.salePrice > 0 && p.salePrice < p.purchasePrice && "Le prix de vente est plus bas que le prix d'achat : vous vendriez à perte.",
+    !p.locationId && 'Choisissez où le produit est rangé.',
+    tiers.some((t) => (t.minQty > 0) !== (t.price > 0)) && 'Un prix de gros est incomplet : remplissez la quantité et le prix, ou supprimez la ligne.',
+    initial && Number.isNaN(Number(initial.replace(',', '.'))) && "La quantité en stock n'est pas un nombre.",
+  ].filter(Boolean) as string[];
 
   const save = async () => {
-    await db.transaction('rw', [db.products, db.movements, db.stock, db.outbox], async () => {
+    setTried(true);
+    if (errs.length) { window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' }); return; }
+    const ok = await run(async () => { await db.transaction('rw', [db.products, db.movements, db.stock, db.outbox], async () => {
       await write('products', { ...p, name: p.name.trim(), tiers: tiers.filter((t) => t.minQty > 0 && t.price > 0) });
       const q = Number(initial.replace(',', '.'));
       if (!id && q) await addMovements([{ productId: p.id, locationId: p.locationId, qty: q, type: 'initial', userId: user.id, at: Date.now(), note: 'Stock de départ' }]);
     });
+    return true; });
+    if (!ok) return;
     toast({ text: id ? 'Produit modifié' : 'Produit ajouté' });
     nav(`/stock/${p.id}`, { replace: true });
   };
@@ -87,7 +103,7 @@ export default function ProductForm() {
 
           <div className="card stack">
             <h2>Stock et rangement</h2>
-            <Field label="Emplacement principal">
+            <Field label="Où est-il rangé ?" hint="L'endroit où l'on va le chercher en premier. Si une partie est ailleurs, utilisez « Déplacer » sur la fiche du produit.">
               <select className="input lg" value={p.locationId} onChange={(e) => set('locationId', e.target.value)}>
                 {locs.filter((l) => l.sellable).map((l) => <option key={l.id} value={l.id}>{l.parentId ? `${locMap.get(l.parentId)?.name} › ${l.name}` : l.name}</option>)}
               </select>
@@ -109,7 +125,8 @@ export default function ProductForm() {
             <Field label="Observations"><textarea className="input" rows={2} value={p.notes ?? ''} onChange={(e) => set('notes', e.target.value)} /></Field>
           </div>
 
-          <button className="btn primary lg block" disabled={!valid} onClick={save}>Enregistrer</button>
+          {tried && <Errors list={errs} />}
+          <button className="btn primary lg block" onClick={save}>Enregistrer</button>
           {id && <button className="btn ghost danger-t" onClick={() => setConfirmArchive(true)}><Archive size={18} />Retirer ce produit du catalogue</button>}
         </div>
       </main>

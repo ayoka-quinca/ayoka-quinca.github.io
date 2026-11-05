@@ -65,3 +65,21 @@ export function ProductGlyph({ category, color, size = 'md' }: { category?: stri
     </span>
   );
 }
+
+/** Écran de chargement : le « A » se dessine, la poutre se pose, puis le nom apparaît. */
+export function Splash({ out }: { out: boolean }) {
+  return (
+    <div className={`splash ${out ? 'out' : ''}`} aria-hidden={out} role="status" aria-label="Chargement d'AYOKA QUINCA">
+      <div className="box">
+        <svg className="mark" viewBox="0 0 64 64">
+          <rect width="64" height="64" rx="18" fill="#141414" />
+          <path className="a" d="M17 47 32 17l15 30" fill="none" stroke="#ffffff" strokeWidth="6.5" strokeLinecap="round" strokeLinejoin="round" />
+          <rect className="beam" x="20.5" y="34" width="23" height="6.5" rx="3.25" fill="#F0601B" />
+        </svg>
+        <div className="word">AYOKA QUINCA</div>
+        <div className="tag">La quincaillerie, sans cahier.</div>
+        <div className="track"><i /></div>
+      </div>
+    </div>
+  );
+}

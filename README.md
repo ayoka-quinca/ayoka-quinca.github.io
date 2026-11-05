@@ -35,6 +35,7 @@ Le serveur sert l'application et la synchronisation sur http://localhost:8080. I
 | 4 | [Déploiement](docs/04-deploiement.md) | Plan en 6 semaines : matériel, serveur, saisie du stock, formation, pilote, bascule |
 | 5 | [Maintenance et évolutions](docs/05-maintenance-evolutions.md) | Routines, sauvegardes, mises à jour, limites connues, feuille de route V2.1 → V5 |
 | 6 | [Fiches mémo](docs/06-fiches-memo.md) | Une page par rôle, à imprimer |
+| 7 | [Comment ça marche](docs/07-comment-ca-marche.md) | Produits, emplacements, inventaire, fournisseurs : les règles expliquées |
 
 Historique des versions : [CHANGELOG.md](CHANGELOG.md).
 

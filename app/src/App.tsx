@@ -11,8 +11,8 @@ import { seedDemo, seedStructure, createOwner, PLAN_ZONES } from './domain/seed'
 import { onSync, startSyncLoop, syncNow, type SyncState } from './domain/sync';
 import { money } from './domain/format';
 import { SessionCtx, useSession } from './ui/hooks';
-import { ToastProvider, NumPad, applyKey, Field } from './ui/kit';
-import { Avatar, Logo, LogoMark } from './ui/Brand';
+import { ToastProvider, NumPad, applyKey, Field, ErrorBoundary } from './ui/kit';
+import { Avatar, Logo, LogoMark, Splash } from './ui/Brand';
 import { StoreMap } from './ui/StoreMap';
 import HomePage from './pages/Home';
 import SellPage from './pages/Sell';
@@ -75,14 +75,29 @@ export const NAV: NavItem[] = NAV_GROUPS.flatMap((g) => g.items);
 const ROLE_ORDER = { responsable: 0, caissiere: 1, employe: 2 } as const;
 
 export default function App() {
+  // L'écran de chargement s'affiche en entier une fois par session, puis s'efface dès que les données sont prêtes.
+  const [minDone, setMinDone] = useState(() => { try { return sessionStorage.getItem('aq.splash') === '1'; } catch { return false; } });
+  useEffect(() => {
+    if (minDone) return;
+    const t = setTimeout(() => { setMinDone(true); try { sessionStorage.setItem('aq.splash', '1'); } catch { /* rien */ } }, 2000);
+    return () => clearTimeout(t);
+  }, [minDone]);
   const users = useLiveQuery(() => db.users.toArray(), []);
+  return (
+    <>
+      {users && <Main users={users} />}
+      <Splash out={!!users && minDone} />
+    </>
+  );
+}
+
+function Main({ users }: { users: User[] }) {
   const [uid, setUid] = useState<string | null>(() => localStorage.getItem('aq.session'));
   useEffect(() => {
     const size = localStorage.getItem('aq.size');
     if (size) document.documentElement.dataset.size = size;
     startSyncLoop();
   }, []);
-  if (!users) return <div style={{ minHeight: '100dvh', display: 'grid', placeItems: 'center' }}><LogoMark size={64} /></div>;
   if (users.length === 0) return <Welcome />;
   const user = users.find((u) => u.id === uid && u.active);
   const lock = () => { localStorage.removeItem('aq.session'); setUid(null); };
@@ -96,7 +111,7 @@ export default function App() {
       <ToastProvider>
         <Router>
           <Shell>
-            <Suspense fallback={<div className="empty">Chargement…</div>}>
+            <ErrorBoundary><Suspense fallback={<div className="empty">Chargement…</div>}>
               <Routes>
                 <Route path="/" element={<HomePage />} />
                 <Route path="/vendre" element={<Guard perm="vendre"><SellPage /></Guard>} />
@@ -122,7 +137,7 @@ export default function App() {
                 <Route path="/plus" element={<MorePage />} />
                 <Route path="*" element={<Navigate to="/" />} />
               </Routes>
-            </Suspense>
+            </Suspense></ErrorBoundary>
           </Shell>
         </Router>
       </ToastProvider>

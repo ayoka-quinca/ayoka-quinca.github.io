@@ -18,9 +18,9 @@ const pin = async (p, code) => { for (const d of code) await p.locator('.numpad 
   await A.locator('.field', { hasText: "aujourd'hui" }).locator('input').fill('50');
   await A.getByRole('button', { name: 'Enregistrer' }).click();
   await A.waitForURL(/stock\/[0-9a-f-]{36}$/);
-  await A.goto(U + '/parametres');
+  await A.goto(U + '/parametres?s=synchro');
   await A.getByPlaceholder('https://ayoka.exemple.bj').fill(U);
-  await A.locator('.card', { hasText: 'Synchronisation' }).locator('input[type=password]').fill(T);
+  await A.locator('input[type=password]').fill(T);
   await A.getByRole('button', { name: 'Enregistrer et synchroniser' }).click();
   await A.waitForTimeout(1500);
   const B = await (await b.newContext({ ...devices['Pixel 7'] })).newPage();

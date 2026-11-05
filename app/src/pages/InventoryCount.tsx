@@ -1,13 +1,14 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { CheckCircle2 } from 'lucide-react';
+import { CheckCircle2, Plus, Lock, Info } from 'lucide-react';
 import { db, type Inventory } from '../db';
 import { can } from '../domain/auth';
 import { matches, money, qty as fq } from '../domain/format';
 import { saveInventory, validateInventory } from '../domain/ops';
 import { useLocations, useProducts, useSession } from '../ui/hooks';
-import { Confirm, SearchBox, Stepper, TopBar, ZoneTag, useToast } from '../ui/kit';
+import { Confirm, SearchBox, Sheet, Stepper, TopBar, ZoneTag, useToast } from '../ui/kit';
+import { dateShort, time } from '../domain/format';
 
 /** Comptage : chaque ligne montre ce que le système attend ; on saisit ce qu'on voit. */
 export default function InventoryCount() {
@@ -20,6 +21,9 @@ export default function InventoryCount() {
   const [q, setQ] = useState('');
   const [onlyLeft, setOnlyLeft] = useState(false);
   const [confirm, setConfirm] = useState(false);
+  const [adding, setAdding] = useState(false);
+  const [aq, setAq] = useState('');
+  const stockHere = useLiveQuery(() => (stored ? db.stock.where('locationId').equals(stored.locationId).toArray() : []), [stored?.locationId]) ?? [];
   const products = useProducts();
   const { map } = useLocations();
   const pmap = new Map(products.map((p) => [p.id, p]));
@@ -44,6 +48,12 @@ export default function InventoryCount() {
           <div className="hbar"><i style={{ width: `${(counted / Math.max(1, inv.lines.length)) * 100}%` }} /></div>
           {gaps.length > 0 && <div className="banner warn">{gaps.length} écart(s){can(user, 'voir_prix_achat') && ` · valeur ${money(gapValue)}`}</div>}
         </div>
+        {done && (
+          <div className="banner info"><Lock size={18} />Inventaire validé le {dateShort(inv.validatedAt ?? inv.startedAt)} à {time(inv.validatedAt ?? inv.startedAt)} : le stock a déjà été corrigé, ce comptage ne se modifie plus. Pour rectifier, lancez un nouvel inventaire de la zone ou corrigez le produit depuis sa fiche.</div>
+        )}
+        {!done && !can(user, 'valider_inventaire') && (
+          <div className="banner info"><Info size={18} />Comptez librement, tout est enregistré au fur et à mesure. La responsable vérifiera et validera.</div>
+        )}
         {!done && (
           <>
             <SearchBox value={q} onChange={setQ} placeholder="Chercher dans la zone…" />
@@ -66,15 +76,16 @@ export default function InventoryCount() {
                 ) : l.counted === undefined ? (
                   <div className="row">
                     <button className="btn soft" onClick={() => set(p.id, l.expected)}>C'est juste ({fq(l.expected)})</button>
-                    <button className="btn" onClick={() => set(p.id, 0)}>Autre</button>
+                    <button className="btn" onClick={() => set(p.id, l.expected)}>Corriger</button>
                   </div>
                 ) : (
-                  <div className="row"><Stepper value={l.counted} onChange={(n) => set(p.id, n)} /><button className="btn ghost small" onClick={() => set(p.id, undefined)}>Effacer</button></div>
+                  <div className="row"><Stepper value={l.counted} onChange={(n) => set(p.id, n)} /><button className="btn ghost sm" onClick={() => set(p.id, undefined)}>Annuler</button></div>
                 )}
               </div>
             );
           })}
         </div>
+        {!done && <button className="btn lg" onClick={() => { setAq(''); setAdding(true); }}><Plus size={18} />J'ai trouvé un produit qui n'est pas dans la liste</button>}
         {!done && (
           can(user, 'valider_inventaire') ? (
             <button className="btn primary lg block" disabled={counted === 0} onClick={() => setConfirm(true)}><CheckCircle2 size={22} />Terminer et corriger le stock</button>
@@ -83,6 +94,25 @@ export default function InventoryCount() {
           )
         )}
       </main>
+      {adding && (
+        <Sheet title="Ajouter un produit au comptage" onClose={() => setAdding(false)}>
+          <div className="stack">
+            <div className="small muted">Le produit sera compté ici, dans « {map.get(inv.locationId)?.name} ». S'il ne devrait pas être là, déplacez-le ensuite depuis sa fiche.</div>
+            <SearchBox value={aq} onChange={setAq} placeholder="Chercher un produit…" autoFocus />
+            <div className="list" style={{ maxHeight: '50dvh', overflowY: 'auto' }}>
+              {products.filter((p) => !inv.lines.some((l) => l.productId === p.id) && matches(p.name, aq)).slice(0, 40).map((p) => (
+                <button key={p.id} className="item" onClick={() => {
+                  const expected = stockHere.find((r) => r.productId === p.id)?.qty ?? 0;
+                  setInv({ ...inv, lines: [{ productId: p.id, expected, counted: expected }, ...inv.lines] });
+                  setAdding(false); toast({ text: `${p.name} ajouté : indiquez la quantité vue` });
+                }}>
+                  <span className="title grow">{p.name}</span><Plus size={18} className="muted" />
+                </button>
+              ))}
+            </div>
+          </div>
+        </Sheet>
+      )}
       {confirm && (
         <Confirm title="Valider l'inventaire ?" confirm="Oui, corriger le stock" onClose={() => setConfirm(false)}
           text={<>{gaps.length} produit(s) seront corrigés. Les produits non comptés ({inv.lines.length - counted}) ne seront pas modifiés.</>}
