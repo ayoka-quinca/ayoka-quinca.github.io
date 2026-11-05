@@ -2,10 +2,13 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 
+const artifact = process.env.VITE_ARTIFACT === '1';
+
 export default defineConfig({
+  base: artifact ? './' : '/',
   plugins: [
     react(),
-    VitePWA({
+    !artifact && VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['icon.svg'],
       manifest: {

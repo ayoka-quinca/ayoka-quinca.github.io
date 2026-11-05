@@ -1,5 +1,8 @@
 import { lazy, Suspense, useEffect, useState, type ReactNode } from 'react';
-import { BrowserRouter, NavLink, Route, Routes, Navigate } from 'react-router-dom';
+import { BrowserRouter, MemoryRouter, NavLink, Route, Routes, Navigate } from 'react-router-dom';
+
+// Version « lien de test » : pas d'URL par écran, la navigation reste interne.
+const Router = import.meta.env.VITE_ARTIFACT === '1' ? MemoryRouter : BrowserRouter;
 import { useLiveQuery } from 'dexie-react-hooks';
 import {
   Home, Package, ShoppingCart, Users, Menu, Map as MapIcon, Truck, ClipboardCheck, BarChart3, Settings,
@@ -64,7 +67,7 @@ export default function App() {
   return (
     <SessionCtx.Provider value={{ user, lock }}>
       <ToastProvider>
-        <BrowserRouter>
+        <Router>
           <Shell>
             <Suspense fallback={<div className="empty">Chargement…</div>}>
               <Routes>
@@ -91,7 +94,7 @@ export default function App() {
               </Routes>
             </Suspense>
           </Shell>
-        </BrowserRouter>
+        </Router>
       </ToastProvider>
     </SessionCtx.Provider>
   );
