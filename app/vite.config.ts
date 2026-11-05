@@ -3,9 +3,11 @@ import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 
 const artifact = process.env.VITE_ARTIFACT === '1';
+// Sous-dossier de publication (ex : « /ayoka-quinca/ » sur GitHub Pages). « / » par défaut.
+const base = artifact ? './' : process.env.VITE_BASE ?? '/';
 
 export default defineConfig({
-  base: artifact ? './' : '/',
+  base,
   // Lien de test : polices intégrées au CSS (aucun fichier externe à charger).
   build: { assetsInlineLimit: artifact ? 10_000_000 : 4096 },
   plugins: [
@@ -18,7 +20,8 @@ export default defineConfig({
         short_name: 'Ayoka Quinca',
         description: 'Ventes, stock et crédits de la quincaillerie Ayoka Quinca',
         lang: 'fr',
-        start_url: '/',
+        start_url: '.',
+        scope: '.',
         display: 'standalone',
         orientation: 'any',
         background_color: '#F5F4F2',
@@ -29,7 +32,7 @@ export default defineConfig({
           { src: 'icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
         ],
       },
-      workbox: { navigateFallback: '/index.html', globPatterns: ['**/*.{js,css,html,svg,png,woff2}'] },
+      workbox: { navigateFallback: `${base}index.html`, globPatterns: ['**/*.{js,css,html,svg,png,woff2}'] },
     }),
   ],
 });

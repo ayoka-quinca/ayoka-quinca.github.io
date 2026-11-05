@@ -109,7 +109,7 @@ function Main({ users }: { users: User[] }) {
   return (
     <SessionCtx.Provider value={{ user, lock }}>
       <ToastProvider>
-        <Router>
+        <Router basename={import.meta.env.VITE_ARTIFACT === '1' ? undefined : import.meta.env.BASE_URL.replace(/\/$/, '') || undefined}>
           <Shell>
             <ErrorBoundary><Suspense fallback={<div className="empty">Chargement…</div>}>
               <Routes>

@@ -51,7 +51,7 @@ export class ErrorBoundary extends Component<{ children: ReactNode }, { error?: 
         <h2>Cet écran a rencontré un problème</h2>
         <p className="soft-t">Vos données ne sont pas perdues. Revenez à l'accueil ; si le problème revient, prévenez la responsable en disant sur quel écran il est apparu.</p>
         <div className="small muted">Détail technique : {friendlyError(this.state.error)}</div>
-        <button className="btn primary lg" onClick={() => { this.setState({ error: undefined }); location.assign(import.meta.env.VITE_ARTIFACT === '1' ? location.href : '/'); }}>Revenir à l'accueil</button>
+        <button className="btn primary lg" onClick={() => { this.setState({ error: undefined }); location.assign(import.meta.env.VITE_ARTIFACT === '1' ? location.href : import.meta.env.BASE_URL); }}>Revenir à l'accueil</button>
       </div></div>
     );
   }
