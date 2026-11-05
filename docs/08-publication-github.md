@@ -23,14 +23,15 @@ On ne travaille que sur la branche `main`. À chaque envoi sur `main`, GitHub la
 
 1. **Installer** les outils nécessaires (`npm ci`).
 2. **Vérifier** le code (`npm run typecheck`). En cas d'erreur, rien n'est publié et le site en ligne reste tel quel.
-3. **Construire** l'application avec la bonne adresse (`npm run build`).
-4. **Publier** le résultat sur https://ayoka-quinca.github.io.
+3. **Construire** l'application et **assembler** le site (`scripts/build-pages.sh`) : le site vitrine à la racine, l'application dans `/gestion/`.
+4. **Publier** le résultat : https://ayoka-quinca.github.io (site) et https://ayoka-quinca.github.io/gestion/ (application).
 
 Durée : 1 à 2 minutes. On suit l'avancement dans l'onglet **Actions** du dépôt : ✅ vert = en ligne, ❌ rouge = rien n'a changé en ligne, cliquer dessus pour voir l'étape en échec.
 
 ## Ce qu'il faut retenir
 
-- On ne touche jamais à `app/dist` à la main : il est fabriqué automatiquement.
+- On ne touche jamais à `app/dist` ni à `public-site` à la main : ils sont fabriqués automatiquement.
+- Le site vitrine (`site/`) n'a pas besoin d'être construit : c'est déjà le « plat », il est seulement copié.
 - Le réglage « GitHub Actions » se fait **une seule fois**.
 - Pour revenir à une version précédente : remettre l'ancien code sur `main`, et la publication suit.
 - L'alternative manuelle (construire sur son ordinateur puis envoyer le résultat sur une branche `gh-pages`) marche aussi. Elle est déconseillée : on peut oublier une étape et mettre en ligne une version différente du code.

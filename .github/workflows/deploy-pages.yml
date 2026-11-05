@@ -1,4 +1,4 @@
-# Publie l'application sur GitHub Pages à chaque envoi sur la branche main.
+# Publie le site vitrine (racine) et l'application de gestion (/gestion/) à chaque envoi sur main.
 # Réglage à faire une seule fois : Settings › Pages › Source : « GitHub Actions ».
 name: Publier sur GitHub Pages
 
@@ -32,21 +32,17 @@ jobs:
       - name: Vérifier les types
         working-directory: app
         run: npm run typecheck
-      - name: Construire
-        working-directory: app
+      - name: Construire le site et l'application
         run: |
           # Site à la racine seulement si le dépôt s'appelle « <propriétaire>.github.io » ;
           # sinon GitHub le publie sous /nom-du-depot/.
           OWNER="${GITHUB_REPOSITORY_OWNER,,}"
           REPO="${GITHUB_REPOSITORY#*/}"
-          if [[ "${REPO,,}" == "$OWNER.github.io" ]]; then export VITE_BASE=/; else export VITE_BASE="/$REPO/"; fi
-          echo "Publication sous $VITE_BASE"
-          npm run build
-          # Les liens directs (ex : /stock) doivent ouvrir l'application, pas une erreur 404.
-          cp dist/index.html dist/404.html
+          if [[ "${REPO,,}" == "$OWNER.github.io" ]]; then PREFIX=/; else PREFIX="/$REPO/"; fi
+          scripts/build-pages.sh "$PREFIX"
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: app/dist
+          path: public-site
 
   deploy:
     needs: build

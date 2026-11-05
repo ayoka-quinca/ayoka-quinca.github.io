@@ -4,6 +4,15 @@ Application pour la quincaillerie **AYOKA QUINCA** (Sèmè-Podji, Bénin) : vent
 
 **Une seule application** pour le téléphone et l'ordinateur, qui **fonctionne sans Internet** et se synchronise dès que le réseau revient.
 
+## En ligne
+
+| Module | Adresse |
+|---|---|
+| Site vitrine (clients) | https://ayoka-quinca.github.io |
+| Application de gestion (équipe) | https://ayoka-quinca.github.io/gestion/ |
+
+Le projet est découpé en modules indépendants (`app/`, `server/`, `site/`) : voir [docs/00-modules.md](docs/00-modules.md).
+
 ## Démarrer en 1 minute (démonstration)
 
 ```bash
@@ -29,6 +38,7 @@ Le serveur sert l'application et la synchronisation sur http://localhost:8080. I
 
 | # | Document | Contenu |
 |---|---|---|
+| 0 | [Les modules](docs/00-modules.md) | Qui fait quoi : application, serveur, site vitrine |
 | 1 | [Analyse et choix](docs/01-analyse-et-choix.md) | Lecture du cahier des charges, écarts relevés, décisions justifiées |
 | 2 | [Design system « Comptoir » V2](docs/02-design-system.md) | Règles, identité, couleurs, typographie, composants |
 | 3 | [Architecture](docs/03-architecture.md) | Modèle de données, synchronisation hors ligne, sécurité, droits, tests |
@@ -37,6 +47,7 @@ Le serveur sert l'application et la synchronisation sur http://localhost:8080. I
 | 6 | [Fiches mémo](docs/06-fiches-memo.md) | Une page par rôle, à imprimer |
 | 7 | [Comment ça marche](docs/07-comment-ca-marche.md) | Produits, emplacements, inventaire, fournisseurs : les règles expliquées |
 | 8 | [Mise en ligne sur GitHub](docs/08-publication-github.md) | Pourquoi « GitHub Actions », ce qui se passe à chaque modification |
+| 9 | [Site vitrine et assistant](docs/09-site-vitrine.md) | Commande WhatsApp, modifier le contenu, assistant, tests |
 
 Historique des versions : [CHANGELOG.md](CHANGELOG.md).
 
@@ -55,3 +66,5 @@ Puis, dans un autre terminal (Playwright requis) :
 ```bash
 node tests/e2e.cjs
 ```
+
+Site vitrine : voir [docs/09-site-vitrine.md](docs/09-site-vitrine.md#96-tester).

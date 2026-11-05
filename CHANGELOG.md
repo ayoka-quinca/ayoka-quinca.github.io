@@ -1,5 +1,21 @@
 # Historique des versions
 
+## Site vitrine 1.0 + application 2.2 (novembre 2026)
+
+**Nouveau module : site vitrine** (`site/`, https://ayoka-quinca.github.io)
+- Accueil, catalogue avec recherche et familles, « Comment commander », présentation de la boutique avec le plan, contact, horaires, FAQ.
+- Commande composée sur le site puis envoyée sur WhatsApp, avec un message prêt.
+- Assistant à règles : horaires, adresse, paiement, livraison, devis, recherche de produits avec quantités, renvoi vers WhatsApp quand il ne sait pas.
+- Contenu modifiable dans `site/data/config.json` et `site/data/catalogue.json`.
+
+**Publication**
+- L'application de gestion passe à **/gestion/**, le site vitrine prend la racine.
+- `scripts/build-pages.sh` assemble les deux ; le workflow GitHub l'utilise.
+
+**Application 2.2**
+- Avatars et cartes cliquables centrés.
+- Prise en charge d'une publication dans un sous-dossier (`VITE_BASE`).
+
 ## 2.1.0 (novembre 2026)
 
 **Corrections**

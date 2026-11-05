@@ -1,0 +1,22 @@
+{
+  "_aide": "Informations affichées sur le site et utilisées par l'assistant. Modifiez les valeurs entre guillemets, sans toucher aux noms à gauche.",
+  "nom": "AYOKA QUINCA",
+  "slogan": "Matériaux de construction et quincaillerie générale",
+  "depuis": 2016,
+  "adresse": "Sèmè-Podji, Maison ADAM",
+  "ville": "Sèmè-Podji, Bénin",
+  "telephone": "01 96 42 52 81",
+  "whatsapp": "2290196425281",
+  "email": "mouritalacisf@gmail.com",
+  "responsable": "Mme MOURITALA Sofiatou",
+  "horaires": [
+    { "jours": "Lundi – Samedi", "heures": "8 h 00 – 19 h 00" },
+    { "jours": "Dimanche", "heures": "Fermé" }
+  ],
+  "_horaires": "À CONFIRMER avec la boutique avant la mise en ligne définitive.",
+  "paiements": ["Espèces", "MTN MoMo", "Moov Money"],
+  "livraison": "La livraison se discute selon la quantité et le quartier : précisez-le dans votre message.",
+  "afficherPrix": false,
+  "_afficherPrix": "false = « Prix sur demande » (recommandé tant que les prix du catalogue ne sont pas validés). true = affiche les prix indicatifs.",
+  "googleMaps": "https://www.google.com/maps/search/?api=1&query=Maison+ADAM+S%C3%A8m%C3%A8-Podji"
+}

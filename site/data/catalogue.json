@@ -1,0 +1,448 @@
+{
+ "_aide": "Catalogue affiché sur le site. Une ligne par produit. « prix » est indicatif et n'est affiché que si afficherPrix = true dans config.json. « populaire » = mis en avant.",
+ "categories": [
+  {
+   "id": "ciment",
+   "nom": "Ciment",
+   "description": "Sacs de 50 kg, pour la maçonnerie et le béton.",
+   "icone": "package",
+   "couleur": "#5B6472"
+  },
+  {
+   "id": "fer",
+   "nom": "Fer à béton",
+   "description": "Barres de 12 m, du 6 au 16 mm.",
+   "icone": "construction",
+   "couleur": "#C2410C"
+  },
+  {
+   "id": "toles",
+   "nom": "Tôles",
+   "description": "Bac alu et tôles ondulées pour la toiture.",
+   "icone": "panel-top",
+   "couleur": "#C2410C"
+  },
+  {
+   "id": "bois",
+   "nom": "Contreplaqué & isorel",
+   "description": "Panneaux pour coffrage, plafonds et menuiserie.",
+   "icone": "layers",
+   "couleur": "#8A5A2B"
+  },
+  {
+   "id": "carrelage",
+   "nom": "Carrelage",
+   "description": "Sol, mur, colle et croisillons.",
+   "icone": "layout-grid",
+   "couleur": "#7B4FB0"
+  },
+  {
+   "id": "plomberie",
+   "nom": "Plomberie",
+   "description": "Tuyaux PVC, raccords, robinets, colle.",
+   "icone": "droplets",
+   "couleur": "#2F6FB0"
+  },
+  {
+   "id": "electricite",
+   "nom": "Électricité",
+   "description": "Fils, gaines, prises, interrupteurs, ampoules.",
+   "icone": "plug",
+   "couleur": "#2F6FB0"
+  },
+  {
+   "id": "serrurerie",
+   "nom": "Serrurerie",
+   "description": "Cadenas, serrures, paumelles.",
+   "icone": "lock",
+   "couleur": "#D9920F"
+  },
+  {
+   "id": "outils",
+   "nom": "Outils & divers",
+   "description": "Truelles, marteaux, brouettes, pointes, fil d'attache.",
+   "icone": "hammer",
+   "couleur": "#D9920F"
+  }
+ ],
+ "produits": [
+  {
+   "id": "ciment-cpj-35",
+   "nom": "Ciment CPJ 35",
+   "categorie": "ciment",
+   "unite": "sac",
+   "dimension": "50 kg",
+   "prix": 4700,
+   "populaire": true
+  },
+  {
+   "id": "ciment-cpj-45",
+   "nom": "Ciment CPJ 45",
+   "categorie": "ciment",
+   "unite": "sac",
+   "dimension": "50 kg",
+   "prix": 4950,
+   "populaire": false
+  },
+  {
+   "id": "fer-a-beton-6-mm",
+   "nom": "Fer à béton 6 mm",
+   "categorie": "fer",
+   "unite": "barre",
+   "dimension": "12 m",
+   "prix": 1550,
+   "populaire": false
+  },
+  {
+   "id": "fer-a-beton-8-mm",
+   "nom": "Fer à béton 8 mm",
+   "categorie": "fer",
+   "unite": "barre",
+   "dimension": "12 m",
+   "prix": 2500,
+   "populaire": true
+  },
+  {
+   "id": "fer-a-beton-10-mm",
+   "nom": "Fer à béton 10 mm",
+   "categorie": "fer",
+   "unite": "barre",
+   "dimension": "12 m",
+   "prix": 3900,
+   "populaire": true
+  },
+  {
+   "id": "fer-a-beton-12-mm",
+   "nom": "Fer à béton 12 mm",
+   "categorie": "fer",
+   "unite": "barre",
+   "dimension": "12 m",
+   "prix": 5500,
+   "populaire": true
+  },
+  {
+   "id": "fer-a-beton-14-mm",
+   "nom": "Fer à béton 14 mm",
+   "categorie": "fer",
+   "unite": "barre",
+   "dimension": "12 m",
+   "prix": 7400,
+   "populaire": false
+  },
+  {
+   "id": "fil-d-attache-recuit",
+   "nom": "Fil d'attache recuit",
+   "categorie": "outils",
+   "unite": "kg",
+   "dimension": "",
+   "prix": 1200,
+   "populaire": false
+  },
+  {
+   "id": "tole-bac-alu-0-35",
+   "nom": "Tôle bac alu 0,35",
+   "categorie": "toles",
+   "unite": "mètre",
+   "dimension": "largeur 1 m",
+   "prix": 3800,
+   "populaire": true
+  },
+  {
+   "id": "tole-ondulee-galvanisee",
+   "nom": "Tôle ondulée galvanisée",
+   "categorie": "toles",
+   "unite": "feuille",
+   "dimension": "2 m",
+   "prix": 3500,
+   "populaire": false
+  },
+  {
+   "id": "contreplaque-5-mm",
+   "nom": "Contreplaqué 5 mm",
+   "categorie": "bois",
+   "unite": "feuille",
+   "dimension": "122 × 244 cm",
+   "prix": 8800,
+   "populaire": false
+  },
+  {
+   "id": "contreplaque-10-mm",
+   "nom": "Contreplaqué 10 mm",
+   "categorie": "bois",
+   "unite": "feuille",
+   "dimension": "122 × 244 cm",
+   "prix": 13000,
+   "populaire": false
+  },
+  {
+   "id": "isorel-3-mm",
+   "nom": "Isorel 3 mm",
+   "categorie": "bois",
+   "unite": "feuille",
+   "dimension": "122 × 244 cm",
+   "prix": 4200,
+   "populaire": false
+  },
+  {
+   "id": "carreau-sol-gres-4040",
+   "nom": "Carreau sol grès 40×40",
+   "categorie": "carrelage",
+   "unite": "m²",
+   "dimension": "40 × 40 cm",
+   "prix": 4500,
+   "populaire": true
+  },
+  {
+   "id": "carreau-poli-6060",
+   "nom": "Carreau poli 60×60",
+   "categorie": "carrelage",
+   "unite": "m²",
+   "dimension": "60 × 60 cm",
+   "prix": 7500,
+   "populaire": false
+  },
+  {
+   "id": "faience-murale-2540",
+   "nom": "Faïence murale 25×40",
+   "categorie": "carrelage",
+   "unite": "m²",
+   "dimension": "25 × 40 cm",
+   "prix": 5000,
+   "populaire": false
+  },
+  {
+   "id": "colle-carrelage",
+   "nom": "Colle carrelage",
+   "categorie": "carrelage",
+   "unite": "sac",
+   "dimension": "25 kg",
+   "prix": 4800,
+   "populaire": false
+  },
+  {
+   "id": "croisillons-3-mm",
+   "nom": "Croisillons 3 mm",
+   "categorie": "carrelage",
+   "unite": "sachet",
+   "dimension": "200 pièces",
+   "prix": 500,
+   "populaire": false
+  },
+  {
+   "id": "tuyau-pvc-pression-20",
+   "nom": "Tuyau PVC pression Ø20",
+   "categorie": "plomberie",
+   "unite": "barre",
+   "dimension": "4 m",
+   "prix": 1500,
+   "populaire": false
+  },
+  {
+   "id": "tuyau-pvc-pression-32",
+   "nom": "Tuyau PVC pression Ø32",
+   "categorie": "plomberie",
+   "unite": "barre",
+   "dimension": "4 m",
+   "prix": 2600,
+   "populaire": true
+  },
+  {
+   "id": "tuyau-pvc-evacuation-50",
+   "nom": "Tuyau PVC évacuation Ø50",
+   "categorie": "plomberie",
+   "unite": "barre",
+   "dimension": "4 m",
+   "prix": 3400,
+   "populaire": false
+  },
+  {
+   "id": "tuyau-pvc-evacuation-110",
+   "nom": "Tuyau PVC évacuation Ø110",
+   "categorie": "plomberie",
+   "unite": "barre",
+   "dimension": "4 m",
+   "prix": 7500,
+   "populaire": false
+  },
+  {
+   "id": "coude-pvc-90-32",
+   "nom": "Coude PVC 90° Ø32",
+   "categorie": "plomberie",
+   "unite": "pièce",
+   "dimension": "",
+   "prix": 250,
+   "populaire": false
+  },
+  {
+   "id": "te-pvc-32",
+   "nom": "Té PVC Ø32",
+   "categorie": "plomberie",
+   "unite": "pièce",
+   "dimension": "",
+   "prix": 300,
+   "populaire": false
+  },
+  {
+   "id": "robinet-laiton-1-2",
+   "nom": "Robinet laiton 1/2\"",
+   "categorie": "plomberie",
+   "unite": "pièce",
+   "dimension": "",
+   "prix": 2500,
+   "populaire": false
+  },
+  {
+   "id": "colle-pvc",
+   "nom": "Colle PVC",
+   "categorie": "plomberie",
+   "unite": "tube",
+   "dimension": "250 ml",
+   "prix": 1300,
+   "populaire": false
+  },
+  {
+   "id": "tube-orange-16",
+   "nom": "Tube orange Ø16",
+   "categorie": "electricite",
+   "unite": "barre",
+   "dimension": "3 m",
+   "prix": 350,
+   "populaire": false
+  },
+  {
+   "id": "tube-orange-20",
+   "nom": "Tube orange Ø20",
+   "categorie": "electricite",
+   "unite": "barre",
+   "dimension": "3 m",
+   "prix": 450,
+   "populaire": false
+  },
+  {
+   "id": "fil-electrique-2-5-mm",
+   "nom": "Fil électrique 2,5 mm²",
+   "categorie": "electricite",
+   "unite": "rouleau",
+   "dimension": "100 m",
+   "prix": 22000,
+   "populaire": true
+  },
+  {
+   "id": "interrupteur-simple",
+   "nom": "Interrupteur simple",
+   "categorie": "electricite",
+   "unite": "pièce",
+   "dimension": "",
+   "prix": 800,
+   "populaire": false
+  },
+  {
+   "id": "prise-double",
+   "nom": "Prise double",
+   "categorie": "electricite",
+   "unite": "pièce",
+   "dimension": "",
+   "prix": 1300,
+   "populaire": false
+  },
+  {
+   "id": "ampoule-led-9-w",
+   "nom": "Ampoule LED 9 W",
+   "categorie": "electricite",
+   "unite": "pièce",
+   "dimension": "",
+   "prix": 1000,
+   "populaire": false
+  },
+  {
+   "id": "disjoncteur-16-a",
+   "nom": "Disjoncteur 16 A",
+   "categorie": "electricite",
+   "unite": "pièce",
+   "dimension": "",
+   "prix": 3500,
+   "populaire": false
+  },
+  {
+   "id": "cadenas-40-mm",
+   "nom": "Cadenas 40 mm",
+   "categorie": "serrurerie",
+   "unite": "pièce",
+   "dimension": "",
+   "prix": 2200,
+   "populaire": false
+  },
+  {
+   "id": "serrure-3-points",
+   "nom": "Serrure 3 points",
+   "categorie": "serrurerie",
+   "unite": "pièce",
+   "dimension": "",
+   "prix": 12000,
+   "populaire": false
+  },
+  {
+   "id": "paumelle-100-mm",
+   "nom": "Paumelle 100 mm",
+   "categorie": "serrurerie",
+   "unite": "pièce",
+   "dimension": "",
+   "prix": 500,
+   "populaire": false
+  },
+  {
+   "id": "marteau-de-coffreur",
+   "nom": "Marteau de coffreur",
+   "categorie": "outils",
+   "unite": "pièce",
+   "dimension": "",
+   "prix": 2500,
+   "populaire": false
+  },
+  {
+   "id": "truelle",
+   "nom": "Truelle",
+   "categorie": "outils",
+   "unite": "pièce",
+   "dimension": "",
+   "prix": 2000,
+   "populaire": false
+  },
+  {
+   "id": "metre-ruban-5-m",
+   "nom": "Mètre ruban 5 m",
+   "categorie": "outils",
+   "unite": "pièce",
+   "dimension": "",
+   "prix": 1500,
+   "populaire": false
+  },
+  {
+   "id": "brouette",
+   "nom": "Brouette",
+   "categorie": "outils",
+   "unite": "pièce",
+   "dimension": "",
+   "prix": 27000,
+   "populaire": false
+  },
+  {
+   "id": "pointes-70-mm",
+   "nom": "Pointes 70 mm",
+   "categorie": "outils",
+   "unite": "kg",
+   "dimension": "",
+   "prix": 1300,
+   "populaire": false
+  },
+  {
+   "id": "acide-chlorhydrique",
+   "nom": "Acide chlorhydrique",
+   "categorie": "outils",
+   "unite": "bidon",
+   "dimension": "1 L",
+   "prix": 1000,
+   "populaire": false
+  }
+ ]
+}

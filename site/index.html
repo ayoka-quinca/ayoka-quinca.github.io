@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>AYOKA QUINCA · Quincaillerie à Sèmè-Podji</title>
+  <meta name="description" content="Ciment, fer à béton, tôles, carrelage, plomberie, électricité et outils à Sèmè-Podji. Composez votre commande et envoyez-la sur WhatsApp.">
+  <meta name="theme-color" content="#141414">
+  <meta property="og:title" content="AYOKA QUINCA · Quincaillerie à Sèmè-Podji">
+  <meta property="og:description" content="Tout pour bâtir, à deux pas de chez vous. Commandez sur WhatsApp.">
+  <meta property="og:type" content="website">
+  <link rel="icon" href="assets/logo.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Plus+Jakarta+Sans:wght@400..800&display=swap">
+  <link rel="stylesheet" href="styles.css">
+  <script type="module" src="app.js"></script>
+</head>
+<body>
+  <a class="skip" href="#produits">Aller aux produits</a>
+
+  <!-- ===================== En-tête ===================== -->
+  <header class="top" id="top">
+    <div class="wrap top-in">
+      <a href="#top" class="brand" aria-label="AYOKA QUINCA, accueil">
+        <img src="assets/logo.svg" alt="" width="38" height="38">
+        <span><strong>AYOKA QUINCA</strong><small>Quincaillerie · Sèmè-Podji</small></span>
+      </a>
+      <nav class="nav" id="nav" aria-label="Navigation principale">
+        <a href="#produits">Produits</a>
+        <a href="#commander">Comment commander</a>
+        <a href="#boutique">La boutique</a>
+        <a href="#contact">Nous trouver</a>
+      </nav>
+      <div class="top-actions">
+        <button class="btn btn-ink cart-btn" data-open-cart aria-label="Ma commande">
+          <span data-icon="shopping-bag"></span><span class="hide-s">Ma commande</span><span class="count" data-count hidden>0</span>
+        </button>
+        <button class="btn btn-soft menu-btn" id="menuBtn" aria-label="Menu" aria-expanded="false" aria-controls="nav"><span data-icon="menu"></span></button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <!-- ===================== Accroche ===================== -->
+    <section class="hero">
+      <div class="wrap hero-in">
+        <div class="hero-text">
+          <p class="eyebrow">Quincaillerie à Sèmè-Podji · depuis <span data-cfg="depuis">2016</span></p>
+          <h1 class="display">Tout pour bâtir,<br><em>à deux pas</em> de chez vous.</h1>
+          <p class="lead">Ciment, fer à béton, tôles, carrelage, plomberie, électricité et outils. Composez votre liste ici, envoyez-la sur WhatsApp : on vous répond avec le prix et on prépare tout.</p>
+          <div class="cta-row">
+            <a href="#produits" class="btn btn-accent btn-lg">Voir les produits <span data-icon="arrow-right"></span></a>
+            <a class="btn btn-line btn-lg" data-wa="Bonjour AYOKA QUINCA, j'ai une question :" target="_blank" rel="noopener"><span data-icon="message-circle"></span>Écrire sur WhatsApp</a>
+          </div>
+          <ul class="facts">
+            <li><span data-icon="store"></span>Particuliers et professionnels</li>
+            <li><span data-icon="banknote"></span>Espèces et Mobile Money</li>
+            <li><span data-icon="warehouse"></span>Gros volumes en stock</li>
+          </ul>
+        </div>
+        <div class="hero-art" aria-hidden="true">
+          <div class="mosaic" id="mosaic"></div>
+          <div class="bubble">
+            <div class="bubble-head"><span data-icon="message-circle"></span>Commande WhatsApp</div>
+            <p>Bonjour AYOKA QUINCA, je souhaite :<br>• 20 sacs de Ciment CPJ 35<br>• 50 barres de Fer à béton 10 mm</p>
+            <span class="bubble-time">08:42 ✓✓</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== Produits ===================== -->
+    <section class="section" id="produits" aria-labelledby="t-produits">
+      <div class="wrap">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">Catalogue</p>
+            <h2 id="t-produits" class="display h2">Nos produits</h2>
+          </div>
+          <p class="muted" data-price-note>Les prix dépendent de la quantité : ajoutez ce qu'il vous faut, nous vous répondons avec un prix précis.</p>
+        </div>
+        <div class="tools">
+          <label class="search">
+            <span data-icon="search"></span>
+            <input id="q" type="search" placeholder="Rechercher : ciment, fer 10, coude…" aria-label="Rechercher un produit" autocomplete="off">
+          </label>
+          <div class="chips" id="chips" role="tablist" aria-label="Catégories"></div>
+        </div>
+        <div class="grid" id="grid" aria-live="polite"></div>
+        <p class="empty" id="empty" hidden>Rien trouvé pour cette recherche. <a data-wa="Bonjour AYOKA QUINCA, avez-vous : " target="_blank" rel="noopener">Demandez-nous sur WhatsApp</a>, nous avons sans doute ce qu'il vous faut.</p>
+        <noscript><p class="empty">Activez JavaScript pour voir le catalogue, ou appelez-nous au 01 96 42 52 81.</p></noscript>
+      </div>
+    </section>
+
+    <!-- ===================== Comment commander ===================== -->
+    <section class="section alt" id="commander" aria-labelledby="t-commander">
+      <div class="wrap">
+        <p class="eyebrow">Simple et rapide</p>
+        <h2 id="t-commander" class="display h2">Commander en <em>3 étapes</em></h2>
+        <ol class="steps">
+          <li><span class="num">1</span><h3>Choisissez</h3><p>Ajoutez les produits et les quantités à votre commande, depuis le catalogue ou en demandant à l'assistant.</p></li>
+          <li><span class="num">2</span><h3>Envoyez sur WhatsApp</h3><p>Votre liste part toute prête. Nous vous confirmons la disponibilité et le prix, souvent en quelques minutes.</p></li>
+          <li><span class="num">3</span><h3>Récupérez</h3><p>Passez au magasin : tout est préparé. Payez en espèces ou par Mobile Money. Pour la livraison, on en parle ensemble.</p></li>
+        </ol>
+      </div>
+    </section>
+
+    <!-- ===================== La boutique ===================== -->
+    <section class="section" id="boutique" aria-labelledby="t-boutique">
+      <div class="wrap split">
+        <div class="stack">
+          <p class="eyebrow">La boutique</p>
+          <h2 id="t-boutique" class="display h2">Une quincaillerie de quartier, <em>bien rangée</em>.</h2>
+          <p>Depuis <span data-cfg="depuis">2016</span>, AYOKA QUINCA fournit les particuliers, les maçons, les plombiers, les électriciens et les entreprises de Sèmè-Podji et des environs.</p>
+          <p>Le magasin est organisé en six espaces : le hall pour les petits articles, le magasin principal pour la plomberie, l'électricité et la serrurerie, un entrepôt pour le ciment, un pour le carrelage, un pour les panneaux et l'arrière-cour pour les fers et les tôles. Résultat : on trouve vite, on vous sert vite.</p>
+          <ul class="values">
+            <li><span data-icon="users"></span><div><strong>Du conseil</strong><span>Quelle section de fer, combien de sacs ? On vous aide à calculer.</span></div></li>
+            <li><span data-icon="boxes"></span><div><strong>Prix de gros</strong><span>Tarifs dégressifs pour les chantiers et les professionnels.</span></div></li>
+            <li><span data-icon="shield-check"></span><div><strong>Devis gratuit</strong><span>Facture proforma sur demande, pour votre budget ou votre client.</span></div></li>
+          </ul>
+        </div>
+        <figure class="plan-card">
+          <div id="plan"></div>
+          <figcaption>Le magasin : 20 m × 14 m, six espaces de stockage.</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <!-- ===================== Contact ===================== -->
+    <section class="section alt" id="contact" aria-labelledby="t-contact">
+      <div class="wrap">
+        <p class="eyebrow">Nous trouver</p>
+        <h2 id="t-contact" class="display h2">Passez nous voir, <em>ou écrivez-nous</em>.</h2>
+        <div class="contact-grid">
+          <div class="card">
+            <span class="glyph"><span data-icon="map-pin"></span></span>
+            <h3>Adresse</h3>
+            <p data-cfg="adresse">Sèmè-Podji, Maison ADAM</p>
+            <a class="link" data-cfg-href="googleMaps" target="_blank" rel="noopener">Itinéraire Google Maps <span data-icon="arrow-right" data-size="16"></span></a>
+          </div>
+          <div class="card">
+            <span class="glyph"><span data-icon="clock"></span></span>
+            <h3>Horaires</h3>
+            <dl class="hours" id="hours"></dl>
+          </div>
+          <div class="card">
+            <span class="glyph"><span data-icon="phone"></span></span>
+            <h3>Contact</h3>
+            <p><a class="link-plain" data-tel><span data-cfg="telephone">01 96 42 52 81</span></a></p>
+            <p class="muted small" data-cfg="email">mouritalacisf@gmail.com</p>
+            <a class="btn btn-accent" data-wa="Bonjour AYOKA QUINCA," target="_blank" rel="noopener"><span data-icon="message-circle"></span>WhatsApp</a>
+          </div>
+        </div>
+        <div class="faq">
+          <h3 class="faq-title">Questions fréquentes</h3>
+          <details><summary>Comment connaître les prix ?</summary><p>Les prix varient selon la quantité et les arrivages. Ajoutez vos produits à la commande et envoyez-la sur WhatsApp : nous vous répondons avec le prix exact.</p></details>
+          <details><summary>Puis-je payer avec Mobile Money ?</summary><p>Oui : espèces, MTN MoMo ou Moov Money.</p></details>
+          <details><summary>Faites-vous la livraison ?</summary><p data-cfg="livraison">La livraison se discute selon la quantité et le quartier : précisez-le dans votre message.</p></details>
+          <details><summary>Faites-vous des prix pour les chantiers ?</summary><p>Oui, nous avons des tarifs de gros. Envoyez votre liste de matériaux, nous préparons une facture proforma.</p></details>
+          <details><summary>Je ne trouve pas un produit sur le site.</summary><p>Le site ne montre que les articles les plus courants. Demandez-nous sur WhatsApp : nous l'avons peut-être, ou nous pouvons le commander.</p></details>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <div class="wrap foot-in">
+      <div class="brand"><img src="assets/logo.svg" alt="" width="34" height="34"><span><strong>AYOKA QUINCA</strong><small data-cfg="slogan">Matériaux de construction et quincaillerie générale</small></span></div>
+      <p class="muted small"><span data-cfg="adresse">Sèmè-Podji, Maison ADAM</span> · <span data-cfg="telephone">01 96 42 52 81</span></p>
+      <p class="muted small">© <span id="year">2026</span> AYOKA QUINCA · <a href="gestion/" class="link-plain">Espace équipe</a></p>
+    </div>
+  </footer>
+
+  <!-- ===================== Barre de commande (téléphone) ===================== -->
+  <div class="orderbar" id="orderbar" hidden>
+    <button class="orderbar-in" data-open-cart>
+      <span><strong data-count-text>0 article</strong><small>Touchez pour vérifier et envoyer</small></span>
+      <span class="btn btn-accent"><span data-icon="send"></span>Envoyer</span>
+    </button>
+  </div>
+
+  <!-- ===================== Panneau commande ===================== -->
+  <div class="drawer" id="cart" role="dialog" aria-modal="true" aria-labelledby="t-cart" hidden>
+    <div class="drawer-bg" data-close-cart></div>
+    <div class="drawer-panel">
+      <div class="drawer-head">
+        <h2 id="t-cart">Ma commande</h2>
+        <button class="icon-btn" data-close-cart aria-label="Fermer"><span data-icon="x"></span></button>
+      </div>
+      <div class="drawer-body">
+        <div id="cartList"></div>
+        <form id="cartForm" class="form" novalidate>
+          <label>Votre nom<input id="f-name" name="name" autocomplete="name" placeholder="Ex : Koffi"></label>
+          <label>Quartier ou chantier<input id="f-place" name="place" placeholder="Ex : Ekpè, près du marché"></label>
+          <fieldset>
+            <legend>Je préfère</legend>
+            <label class="radio"><input type="radio" name="mode" value="Je passe récupérer au magasin" checked>Passer récupérer</label>
+            <label class="radio"><input type="radio" name="mode" value="J'aimerais être livré(e), merci de me dire le prix">Être livré(e)</label>
+          </fieldset>
+          <label>Précision (facultatif)<textarea id="f-note" name="note" rows="2" placeholder="Ex : c'est pour une dalle de 20 m²"></textarea></label>
+          <p class="form-error" id="formError" role="alert" hidden></p>
+          <button class="btn btn-accent btn-lg btn-block" type="submit"><span data-icon="send"></span>Envoyer sur WhatsApp</button>
+          <p class="muted small center">WhatsApp s'ouvre avec votre message prêt. Vous n'avez plus qu'à appuyer sur Envoyer.</p>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== Assistant ===================== -->
+  <button class="bot-fab" id="botFab" aria-label="Ouvrir l'assistant" aria-expanded="false" aria-controls="bot"><span data-icon="bot" data-size="26"></span><span class="bot-fab-label">Une question ?</span></button>
+  <section class="bot" id="bot" role="dialog" aria-labelledby="t-bot" hidden>
+    <div class="bot-head">
+      <span class="bot-avatar"><img src="assets/logo.svg" alt="" width="36" height="36"></span>
+      <div><h2 id="t-bot">Assistant AYOKA</h2><small>Réponses automatiques · un humain sur WhatsApp</small></div>
+      <button class="icon-btn" id="botClose" aria-label="Fermer l'assistant"><span data-icon="x"></span></button>
+    </div>
+    <div class="bot-log" id="botLog" aria-live="polite"></div>
+    <div class="bot-quick" id="botQuick"></div>
+    <form class="bot-input" id="botForm">
+      <input id="botText" placeholder="Écrivez votre question…" autocomplete="off" aria-label="Votre question">
+      <button class="icon-btn send" aria-label="Envoyer"><span data-icon="send"></span></button>
+    </form>
+  </section>
+
+  <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+</body>
+</html>

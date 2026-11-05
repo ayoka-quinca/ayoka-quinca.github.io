@@ -4,3 +4,4 @@ server/data/
 tests/out/
 .env
 *.db
+public-site/
