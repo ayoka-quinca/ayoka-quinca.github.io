@@ -215,6 +215,11 @@ function plan() {
 
 /* ---------- Démarrage ---------- */
 async function start() {
+  // Retire l'ancien service worker de l'application, installé à la racine avant la V2.2,
+  // qui pouvait encore afficher l'ancienne page d'accueil (l'application reste dans /gestion/).
+  navigator.serviceWorker?.getRegistrations?.().then((regs) => regs.forEach((r) => {
+    if (!new URL(r.scope).pathname.startsWith(new URL('gestion/', location.href).pathname)) r.unregister();
+  })).catch(() => {});
   paintIcons();
   $('#menuBtn').addEventListener('click', () => { const n = $('#nav'); const open = n.classList.toggle('open'); $('#menuBtn').setAttribute('aria-expanded', open); });
   $$('#nav a').forEach((a) => a.addEventListener('click', () => { $('#nav').classList.remove('open'); $('#menuBtn').setAttribute('aria-expanded', 'false'); }));
