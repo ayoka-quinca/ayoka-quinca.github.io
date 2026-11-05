@@ -3,9 +3,9 @@
  * soit tout est enregistré (vente + mouvements de stock + file d'envoi), soit rien.
  */
 import {
-  db, write, uid, getDeviceCode,
+  db, write, uid, getDeviceCode, journal,
   type Movement, type MoveType, type Sale, type SaleItem, type Payment, type PayMethod,
-  type Purchase, type PurchaseItem, type Inventory, type Product,
+  type Purchase, type PurchaseItem, type Inventory, type Product, type Quote,
 } from '../db';
 
 const T_MOVE = [db.movements, db.stock, db.outbox] as const;
@@ -214,11 +214,19 @@ export async function transfer(p: Product, from: string, to: string, q: number, 
       { productId: p.id, locationId: to, qty: q, type: 'transfert', refId, userId, at },
     ]);
     if (makeMain) await write('products', { ...p, locationId: to });
+    journal({ userId, action: 'stock', table: 'products', recordId: p.id, label: p.name, detail: `Déplacé : ${q} ${p.unit}`, changes: [{ field: 'locationId', before: from, after: to }] });
   });
 }
 
 export async function adjust(p: Product, locationId: string, delta: number, type: MoveType, userId: string, note: string) {
-  await db.transaction('rw', [...T_MOVE], () => addMovements([{ productId: p.id, locationId, qty: delta, type, userId, at: Date.now(), note }]));
+  await db.transaction('rw', [...T_MOVE], async () => {
+    await addMovements([{ productId: p.id, locationId, qty: delta, type, userId, at: Date.now(), note }]);
+    journal({
+      userId, action: 'stock', table: 'products', recordId: p.id, label: p.name,
+      detail: `${delta > 0 ? '+' : ''}${delta} ${p.unit} · ${note}`,
+      flag: type === 'perte' ? 'Perte déclarée' : 'Stock corrigé à la main',
+    });
+  });
 }
 
 export async function startInventory(locationId: string, userId: string): Promise<Inventory> {
@@ -247,5 +255,33 @@ export async function validateInventory(inv: Inventory, userId: string) {
       .map((l) => ({ productId: l.productId, locationId: inv.locationId, qty: (l.counted as number) - l.expected, type: 'inventaire' as MoveType, refId: inv.id, userId, at, note: 'Écart d’inventaire' }));
     await addMovements(moves);
     await write('inventories', { ...inv, status: 'valide', validatedAt: at });
+    const loss = moves.filter((m) => m.qty < 0).length;
+    journal({ userId, action: 'inventory', table: 'inventories', recordId: inv.id, label: 'Inventaire validé', detail: `${moves.length} écart(s) corrigé(s)`, flag: loss ? `${loss} produit(s) manquant(s)` : undefined });
   });
+}
+
+/* ------------------------------ Factures proforma ------------------------------ */
+
+export async function createQuote(opts: {
+  lines: CartLine[]; clientId?: string; clientName?: string; clientPhone?: string; validDays: number; notes?: string; userId: string;
+}): Promise<Quote> {
+  return db.transaction('rw', [db.quotes, db.settings, db.outbox], async () => {
+    const seqRow = await db.settings.get('quoteSeq');
+    const seq = ((seqRow?.value as number) ?? 0) + 1;
+    await db.settings.put({ key: 'quoteSeq', value: seq });
+    const at = Date.now();
+    const q: Quote = {
+      id: uid(), number: `P-${getDeviceCode()}-${String(seq).padStart(4, '0')}`, at, userId: opts.userId,
+      clientId: opts.clientId, clientName: opts.clientName, clientPhone: opts.clientPhone,
+      items: opts.lines.map((l) => ({ productId: l.product.id, name: l.product.name, unit: l.product.unit, qty: l.qty, unitPrice: l.unitPrice })),
+      total: opts.lines.reduce((t, l) => t + l.qty * l.unitPrice, 0),
+      validUntil: at + opts.validDays * 86400000, status: 'ouvert', notes: opts.notes, updatedAt: 0,
+    };
+    await write('quotes', q);
+    return q;
+  });
+}
+
+export async function setQuoteStatus(q: Quote, status: Quote['status'], saleId?: string) {
+  await db.transaction('rw', db.quotes, db.outbox, () => write('quotes', { ...q, status, saleId: saleId ?? q.saleId }));
 }

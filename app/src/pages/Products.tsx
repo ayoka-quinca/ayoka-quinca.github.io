@@ -1,11 +1,12 @@
 import { useMemo, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { Plus, Package, Download } from 'lucide-react';
+import { Plus, Package, Download, ChevronDown, MapPin, Tags, Check } from 'lucide-react';
 import { can } from '../domain/auth';
 import { matches, money } from '../domain/format';
 import { download } from '../domain/backup';
 import { rootOf, useCategories, useLocations, useProducts, useSession, useStockMap } from '../ui/hooks';
-import { Empty, SearchBox, StockBadge, TopBar, ZoneTag } from '../ui/kit';
+import { Empty, SearchBox, Sheet, StockBadge, TopBar, ZoneTag } from '../ui/kit';
+import { ProductGlyph } from '../ui/Brand';
 
 export default function ProductsPage() {
   const { user } = useSession();
@@ -16,6 +17,7 @@ export default function ProductsPage() {
   const { list: locList, map: locs } = useLocations();
   const { list: cats, map: catMap } = useCategories();
   const [q, setQ] = useState('');
+  const [picker, setPicker] = useState<'zone' | 'cat' | null>(null);
   const f = params.get('f') ?? 'tous';
   const zone = params.get('zone') ?? '';
   const cat = params.get('cat') ?? '';
@@ -30,8 +32,13 @@ export default function ProductsPage() {
     return matches(`${p.name} ${p.ref ?? ''} ${p.dimensions ?? ''} ${catMap.get(p.categoryId)?.name ?? ''}`, q);
   }), [products, stock, f, zone, cat, q, locs, catMap]);
 
+  const alerts = products.filter((p) => (stock.get(p.id) ?? 0) <= p.minStock).length;
+  const out = products.filter((p) => (stock.get(p.id) ?? 0) <= 0).length;
   const value = list.reduce((t, p) => t + Math.max(0, stock.get(p.id) ?? 0) * p.purchasePrice, 0);
   const zones = locList.filter((l) => !l.parentId && l.sellable);
+  const zoneSel = zone ? locs.get(zone) : undefined;
+  const catSel = cat ? catMap.get(cat) : undefined;
+  const rootLoc = (id: string) => rootOf(locs.get(id), locs);
 
   const exportCsv = () => {
     const rows = [['Produit', 'Catégorie', 'Référence', 'Dimensions', 'Unité', 'Emplacement', 'Stock', 'Seuil', 'Prix vente', ...(can(user, 'voir_prix_achat') ? ['Prix achat'] : [])]];
@@ -44,28 +51,28 @@ export default function ProductsPage() {
       <TopBar title="Stock" right={
         <>
           <button className="btn ghost hide-m" onClick={exportCsv}><Download size={18} />Exporter</button>
-          {can(user, 'modifier_produits') && <button className="btn primary" onClick={() => nav('/stock/nouveau')}><Plus size={20} />Produit</button>}
+          {can(user, 'modifier_produits') && <button className="btn primary" onClick={() => nav('/stock/nouveau')}><Plus size={18} />Produit</button>}
         </>
       } />
-      <main className="main stack">
-        <SearchBox value={q} onChange={setQ} placeholder="Nom, référence, dimension…" autoFocus={params.get('focus') === '1'} />
-        <div className="chips">
-          {[['tous', 'Tous'], ['alerte', 'À commander'], ['epuise', 'Épuisés']].map(([k, l]) => (
-            <button key={k} className={`chip ${f === k ? 'on' : ''}`} onClick={() => setP('f', k === 'tous' ? '' : k)}>{l}</button>
-          ))}
-          <span style={{ width: 1, background: 'var(--line)', flexShrink: 0 }} />
-          {zones.map((z) => (
-            <button key={z.id} className={`chip ${zone === z.id ? 'on' : ''}`} onClick={() => setP('zone', zone === z.id ? '' : z.id)}>
-              <i style={{ width: 10, height: 10, borderRadius: 3, background: z.color }} />{z.name}
+      <main className="main stack-lg">
+        <div className="stack">
+          <SearchBox value={q} onChange={setQ} placeholder="Nom, référence, dimension…" autoFocus={params.get('focus') === '1'} />
+          <div className="seg">
+            <button className={f === 'tous' ? 'on' : ''} onClick={() => setP('f', '')}>Tous</button>
+            <button className={f === 'alerte' ? 'on' : ''} onClick={() => setP('f', 'alerte')}>Stock bas{alerts > 0 && <span className="count">{alerts}</span>}</button>
+            <button className={f === 'epuise' ? 'on' : ''} onClick={() => setP('f', 'epuise')}>Épuisés{out > 0 && <span className="count">{out}</span>}</button>
+          </div>
+          <div className="row" style={{ gap: 8, flexWrap: 'wrap' }}>
+            <button className={`filterbtn ${zoneSel ? 'on' : ''}`} onClick={() => setPicker('zone')}>
+              {zoneSel ? <span style={{ width: 9, height: 9, borderRadius: 5, background: zoneSel.color }} /> : <MapPin size={16} />}
+              {zoneSel?.name ?? 'Toutes les zones'}<ChevronDown size={16} />
             </button>
-          ))}
-        </div>
-        <div className="row between">
-          <select className="input" style={{ maxWidth: 260 }} value={cat} onChange={(e) => setP('cat', e.target.value)} aria-label="Catégorie">
-            <option value="">Toutes les catégories</option>
-            {cats.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-          </select>
-          <span className="small muted">{list.length} produit{list.length > 1 ? 's' : ''}{can(user, 'voir_prix_achat') && <> · valeur {money(value)}</>}</span>
+            <button className={`filterbtn ${catSel ? 'on' : ''}`} onClick={() => setPicker('cat')}>
+              <Tags size={16} />{catSel?.name ?? 'Toutes les catégories'}<ChevronDown size={16} />
+            </button>
+            <span className="grow" />
+            <span className="small muted">{list.length} produit{list.length > 1 ? 's' : ''}{can(user, 'voir_prix_achat') && <span className="hide-m"> · valeur {money(value)}</span>}</span>
+          </div>
         </div>
 
         {list.length === 0 ? (
@@ -73,45 +80,65 @@ export default function ProductsPage() {
         ) : (
           <>
             <div className="list hide-d">
-              {list.map((p) => {
-                const s = stock.get(p.id) ?? 0;
-                return (
-                  <Link key={p.id} to={`/stock/${p.id}`} className="item">
-                    <div className="grow">
-                      <div className="title">{p.name}</div>
-                      <ZoneTag loc={locs.get(p.locationId)} locs={locs} />
-                    </div>
-                    <div className="end stack" style={{ gap: 4, alignItems: 'flex-end' }}>
-                      <StockBadge q={s} min={p.minStock} unit={p.unit} />
-                      <span className="small muted num">{money(p.salePrice)}</span>
-                    </div>
-                  </Link>
-                );
-              })}
+              {list.map((p) => (
+                <Link key={p.id} to={`/stock/${p.id}`} className="item">
+                  <ProductGlyph category={catMap.get(p.categoryId)?.name} color={rootLoc(p.locationId)?.color} />
+                  <div className="grow">
+                    <div className="title">{p.name}</div>
+                    <ZoneTag loc={locs.get(p.locationId)} locs={locs} />
+                  </div>
+                  <div className="end stack" style={{ gap: 4, alignItems: 'flex-end' }}>
+                    <span className="num" style={{ fontWeight: 700 }}>{money(p.salePrice)}</span>
+                    <StockBadge q={stock.get(p.id) ?? 0} min={p.minStock} unit={p.unit} />
+                  </div>
+                </Link>
+              ))}
             </div>
-            <table className="table hide-m card flat" style={{ padding: 0 }}>
-              <thead>
-                <tr><th>Produit</th><th>Catégorie</th><th>Emplacement</th><th className="r">Stock</th><th className="r">Prix vente</th>{can(user, 'voir_prix_achat') && <th className="r">Prix achat</th>}</tr>
-              </thead>
-              <tbody>
-                {list.map((p) => {
-                  const s = stock.get(p.id) ?? 0;
-                  return (
+            <div className="tablewrap hide-m">
+              <table className="table">
+                <thead>
+                  <tr><th>Produit</th><th>Emplacement</th><th className="r">Stock</th><th className="r">Prix de vente</th>{can(user, 'voir_prix_achat') && <th className="r">Prix d'achat</th>}</tr>
+                </thead>
+                <tbody>
+                  {list.map((p) => (
                     <tr key={p.id} onClick={() => nav(`/stock/${p.id}`)}>
-                      <td><strong>{p.name}</strong>{p.dimensions && <span className="muted small"> · {p.dimensions}</span>}</td>
-                      <td className="muted">{catMap.get(p.categoryId)?.name}</td>
+                      <td>
+                        <div className="row" style={{ gap: 12 }}>
+                          <ProductGlyph category={catMap.get(p.categoryId)?.name} color={rootLoc(p.locationId)?.color} size="sm" />
+                          <div><div style={{ fontWeight: 650 }}>{p.name}</div><div className="tiny muted">{catMap.get(p.categoryId)?.name}{p.dimensions && ` · ${p.dimensions}`}</div></div>
+                        </div>
+                      </td>
                       <td><ZoneTag loc={locs.get(p.locationId)} locs={locs} /></td>
-                      <td className="r"><StockBadge q={s} min={p.minStock} unit={p.unit} /></td>
-                      <td className="r num">{money(p.salePrice)}</td>
+                      <td className="r"><StockBadge q={stock.get(p.id) ?? 0} min={p.minStock} unit={p.unit} /></td>
+                      <td className="r num" style={{ fontWeight: 650 }}>{money(p.salePrice)}</td>
                       {can(user, 'voir_prix_achat') && <td className="r num muted">{money(p.purchasePrice)}</td>}
                     </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </>
         )}
       </main>
+      {picker && (
+        <Sheet title={picker === 'zone' ? 'Quelle zone ?' : 'Quelle catégorie ?'} onClose={() => setPicker(null)}>
+          <div className="list">
+            {[{ id: '', name: picker === 'zone' ? 'Toutes les zones' : 'Toutes les catégories', color: undefined as string | undefined },
+              ...(picker === 'zone' ? zones.map((z) => ({ id: z.id, name: z.name, color: z.color as string | undefined })) : cats.map((c) => ({ id: c.id, name: c.name, color: undefined })))].map((o) => {
+              const on = (picker === 'zone' ? zone : cat) === o.id;
+              return (
+                <button key={o.id || 'all'} className="item" onClick={() => { setP(picker === 'zone' ? 'zone' : 'cat', o.id); setPicker(null); }}>
+                  {picker === 'zone'
+                    ? <span className="glyph sm" style={o.color ? { background: `color-mix(in srgb, ${o.color} 16%, var(--surface))`, color: o.color } : undefined}><MapPin size={17} /></span>
+                    : <ProductGlyph category={o.name} size="sm" />}
+                  <span className="title grow">{o.name}</span>
+                  {on && <Check size={20} className="accent-t" />}
+                </button>
+              );
+            })}
+          </div>
+        </Sheet>
+      )}
     </>
   );
 }

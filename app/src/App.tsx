@@ -1,22 +1,24 @@
-import { lazy, Suspense, useEffect, useState, type ReactNode } from 'react';
+import { lazy, Suspense, useEffect, useState, type ReactNode, type CSSProperties } from 'react';
 import { BrowserRouter, MemoryRouter, NavLink, Route, Routes, Navigate } from 'react-router-dom';
-
-// Version « lien de test » : pas d'URL par écran, la navigation reste interne.
-const Router = import.meta.env.VITE_ARTIFACT === '1' ? MemoryRouter : BrowserRouter;
 import { useLiveQuery } from 'dexie-react-hooks';
 import {
   Home, Package, ShoppingCart, Users, Menu, Map as MapIcon, Truck, ClipboardCheck, BarChart3, Settings,
-  Receipt, Lock, Store, WifiOff, Factory,
+  Receipt, Lock, WifiOff, Factory, FileText, History, ArrowRight, MapPin, HandCoins, CloudOff, ChevronLeft, CheckCircle2,
 } from 'lucide-react';
-import { db, type User } from './db';
+import { db, setActor, setSetting, type Location, type User } from './db';
 import { can, checkPin, audit, ROLE_LABEL, type Perm } from './domain/auth';
-import { seedDemo, seedStructure, createOwner } from './domain/seed';
+import { seedDemo, seedStructure, createOwner, PLAN_ZONES } from './domain/seed';
 import { onSync, startSyncLoop, syncNow, type SyncState } from './domain/sync';
-import { setSetting } from './db';
+import { money } from './domain/format';
 import { SessionCtx, useSession } from './ui/hooks';
-import { ToastProvider, NumPad, applyKey, Avatar, Field } from './ui/kit';
+import { ToastProvider, NumPad, applyKey, Field } from './ui/kit';
+import { Avatar, Logo, LogoMark } from './ui/Brand';
+import { StoreMap } from './ui/StoreMap';
 import HomePage from './pages/Home';
 import SellPage from './pages/Sell';
+
+// Version « lien de test » : pas d'URL par écran, la navigation reste interne.
+const Router = import.meta.env.VITE_ARTIFACT === '1' ? MemoryRouter : BrowserRouter;
 
 const ProductsPage = lazy(() => import('./pages/Products'));
 const ProductDetail = lazy(() => import('./pages/ProductDetail'));
@@ -34,20 +36,41 @@ const InventoryCount = lazy(() => import('./pages/InventoryCount'));
 const ReportsPage = lazy(() => import('./pages/Reports'));
 const SettingsPage = lazy(() => import('./pages/Settings'));
 const MorePage = lazy(() => import('./pages/More'));
+const JournalPage = lazy(() => import('./pages/Journal'));
+const QuotesPage = lazy(() => import('./pages/Quotes'));
+const QuoteDetail = lazy(() => import('./pages/QuoteDetail'));
 
-export const NAV: { to: string; label: string; icon: typeof Home; perm?: Perm }[] = [
-  { to: '/', label: 'Accueil', icon: Home },
-  { to: '/vendre', label: 'Vendre', icon: ShoppingCart, perm: 'vendre' },
-  { to: '/ventes', label: 'Ventes du jour', icon: Receipt },
-  { to: '/stock', label: 'Stock', icon: Package },
-  { to: '/plan', label: 'Plan du magasin', icon: MapIcon },
-  { to: '/clients', label: 'Clients & crédits', icon: Users, perm: 'clients' },
-  { to: '/achats', label: 'Achats', icon: Truck, perm: 'achats' },
-  { to: '/fournisseurs', label: 'Fournisseurs', icon: Factory, perm: 'achats' },
-  { to: '/inventaire', label: 'Inventaire', icon: ClipboardCheck, perm: 'inventaire' },
-  { to: '/rapports', label: 'Rapports', icon: BarChart3, perm: 'rapports' },
-  { to: '/parametres', label: 'Paramètres', icon: Settings, perm: 'parametres' },
+type NavItem = { to: string; label: string; icon: typeof Home; perm?: Perm };
+export const NAV_GROUPS: { label: string; items: NavItem[] }[] = [
+  {
+    label: 'Au quotidien',
+    items: [
+      { to: '/', label: 'Accueil', icon: Home },
+      { to: '/ventes', label: 'Ventes', icon: Receipt },
+      { to: '/proformas', label: 'Proformas', icon: FileText, perm: 'vendre' },
+      { to: '/clients', label: 'Clients & crédits', icon: Users, perm: 'clients' },
+    ],
+  },
+  {
+    label: 'Magasin',
+    items: [
+      { to: '/stock', label: 'Stock', icon: Package },
+      { to: '/plan', label: 'Plan du magasin', icon: MapIcon },
+      { to: '/inventaire', label: 'Inventaire', icon: ClipboardCheck, perm: 'inventaire' },
+      { to: '/achats', label: 'Achats', icon: Truck, perm: 'achats' },
+      { to: '/fournisseurs', label: 'Fournisseurs', icon: Factory, perm: 'achats' },
+    ],
+  },
+  {
+    label: 'Pilotage',
+    items: [
+      { to: '/rapports', label: 'Rapports', icon: BarChart3, perm: 'rapports' },
+      { to: '/journal', label: "Journal d'activité", icon: History, perm: 'rapports' },
+      { to: '/parametres', label: 'Paramètres', icon: Settings, perm: 'parametres' },
+    ],
+  },
 ];
+export const NAV: NavItem[] = NAV_GROUPS.flatMap((g) => g.items);
 
 const ROLE_ORDER = { responsable: 0, caissiere: 1, employe: 2 } as const;
 
@@ -59,11 +82,15 @@ export default function App() {
     if (size) document.documentElement.dataset.size = size;
     startSyncLoop();
   }, []);
-  if (!users) return null;
-  if (users.length === 0) return <Onboarding />;
+  if (!users) return <div style={{ minHeight: '100dvh', display: 'grid', placeItems: 'center' }}><LogoMark size={64} /></div>;
+  if (users.length === 0) return <Welcome />;
   const user = users.find((u) => u.id === uid && u.active);
   const lock = () => { localStorage.removeItem('aq.session'); setUid(null); };
-  if (!user) return <Login users={users.filter((u) => u.active).sort((a, b) => ROLE_ORDER[a.role] - ROLE_ORDER[b.role] || a.name.localeCompare(b.name))} onIn={(u) => { localStorage.setItem('aq.session', u.id); setUid(u.id); }} />;
+  if (!user) {
+    const active = users.filter((u) => u.active).sort((a, b) => ROLE_ORDER[a.role] - ROLE_ORDER[b.role] || a.name.localeCompare(b.name));
+    return <Login users={active} onIn={(u) => { localStorage.setItem('aq.session', u.id); setUid(u.id); }} />;
+  }
+  setActor(user.id);
   return (
     <SessionCtx.Provider value={{ user, lock }}>
       <ToastProvider>
@@ -75,6 +102,8 @@ export default function App() {
                 <Route path="/vendre" element={<Guard perm="vendre"><SellPage /></Guard>} />
                 <Route path="/ventes" element={<SalesPage />} />
                 <Route path="/ventes/:id" element={<SaleDetail />} />
+                <Route path="/proformas" element={<Guard perm="vendre"><QuotesPage /></Guard>} />
+                <Route path="/proformas/:id" element={<Guard perm="vendre"><QuoteDetail /></Guard>} />
                 <Route path="/stock" element={<ProductsPage />} />
                 <Route path="/stock/nouveau" element={<Guard perm="modifier_produits"><ProductForm /></Guard>} />
                 <Route path="/stock/:id" element={<ProductDetail />} />
@@ -88,6 +117,7 @@ export default function App() {
                 <Route path="/inventaire" element={<Guard perm="inventaire"><InventoryPage /></Guard>} />
                 <Route path="/inventaire/:id" element={<Guard perm="inventaire"><InventoryCount /></Guard>} />
                 <Route path="/rapports" element={<Guard perm="rapports"><ReportsPage /></Guard>} />
+                <Route path="/journal" element={<Guard perm="rapports"><JournalPage /></Guard>} />
                 <Route path="/parametres" element={<Guard perm="parametres"><SettingsPage /></Guard>} />
                 <Route path="/plus" element={<MorePage />} />
                 <Route path="*" element={<Navigate to="/" />} />
@@ -116,57 +146,56 @@ function Shell({ children }: { children: ReactNode }) {
     window.addEventListener('online', on); window.addEventListener('offline', off);
     return () => { window.removeEventListener('online', on); window.removeEventListener('offline', off); };
   }, []);
-  const items = NAV.filter((n) => !n.perm || can(user, n.perm));
   return (
     <div className="shell">
       <nav className="sidebar" aria-label="Menu principal">
-        <div className="brandmark"><span className="logo"><Store size={20} color="#fff" /></span>AYOKA QUINCA</div>
-        {items.map((n) => (
-          <NavLink key={n.to} to={n.to} end={n.to === '/'}><n.icon size={22} />{n.label}</NavLink>
-        ))}
+        <div className="brand"><Logo size={38} sub={false} /></div>
+        {can(user, 'vendre') && <NavLink to="/vendre" className="sell-cta"><ShoppingCart size={20} />Nouvelle vente</NavLink>}
+        {NAV_GROUPS.map((g) => {
+          const items = g.items.filter((n) => !n.perm || can(user, n.perm));
+          if (!items.length) return null;
+          return (
+            <div key={g.label} className="navgroup">
+              <div className="navlabel eyebrow">{g.label}</div>
+              {items.map((n) => <NavLink key={n.to} to={n.to} end={n.to === '/'}><n.icon size={20} />{n.label}</NavLink>)}
+            </div>
+          );
+        })}
         <div className="grow" />
         <SyncPill sync={sync} online={online} />
-        <div className="sep" />
-        <div className="row" style={{ padding: '4px 8px' }}>
+        <div className="me" style={{ marginTop: 10 }}>
           <Avatar name={user.name} color={user.color} />
-          <div className="grow"><div style={{ fontWeight: 700 }}>{user.name}</div><div className="small muted">{ROLE_LABEL[user.role]}</div></div>
-          <button className="iconbtn" onClick={() => { audit(user.id, 'Déconnexion'); lock(); }} aria-label="Verrouiller" title="Verrouiller"><Lock size={20} /></button>
+          <div className="grow"><div style={{ fontWeight: 700 }}>{user.name}</div><div className="tiny muted">{ROLE_LABEL[user.role]}</div></div>
+          <button className="iconbtn" onClick={() => { audit(user.id, 'logout'); lock(); }} aria-label="Verrouiller" title="Verrouiller"><Lock size={18} /></button>
         </div>
       </nav>
       <div>
-        {!online && (
-          <div className="banner warn hide-d" style={{ borderRadius: 0 }}>
-            <WifiOff size={18} /> Pas d'Internet — tout continue de marcher, les données partiront plus tard.
-          </div>
-        )}
+        {!online && <div className="banner warn offline hide-d"><WifiOff size={16} />Hors ligne · vos ventes sont gardées et partiront plus tard</div>}
         {children}
       </div>
       <nav className="bottomnav" aria-label="Navigation">
-        <NavLink to="/" end><Home size={24} />Accueil</NavLink>
-        <NavLink to="/stock"><Package size={24} />Stock</NavLink>
-        {can(user, 'vendre') ? (
-          <NavLink to="/vendre" aria-label="Vendre"><span className="sell-fab"><ShoppingCart size={28} /></span>Vendre</NavLink>
-        ) : (
-          <NavLink to="/plan"><MapIcon size={24} />Plan</NavLink>
-        )}
-        {can(user, 'clients') ? <NavLink to="/clients"><Users size={24} />Clients</NavLink> : <NavLink to="/inventaire"><ClipboardCheck size={24} />Inventaire</NavLink>}
-        <NavLink to="/plus"><Menu size={24} />Plus</NavLink>
+        <NavLink to="/" end><Home size={22} />Accueil</NavLink>
+        <NavLink to="/stock"><Package size={22} />Stock</NavLink>
+        {can(user, 'vendre') ? <NavLink to="/vendre" className="sell"><ShoppingCart size={22} />Vendre</NavLink> : <NavLink to="/plan"><MapIcon size={22} />Plan</NavLink>}
+        {can(user, 'clients') ? <NavLink to="/clients"><Users size={22} />Clients</NavLink> : <NavLink to="/inventaire"><ClipboardCheck size={22} />Inventaire</NavLink>}
+        <NavLink to="/plus"><Menu size={22} />Plus</NavLink>
       </nav>
     </div>
   );
 }
 
 export function SyncPill({ sync, online }: { sync: SyncState; online: boolean }) {
-  const label = !online ? 'Hors ligne' : sync.status === 'off' ? 'Données sur cet appareil' : sync.status === 'syncing' ? 'Synchronisation…' : sync.status === 'error' ? 'Synchro en échec' : 'À jour';
-  const cls = !online || sync.status === 'error' ? 'warn' : sync.status === 'off' ? 'neutral' : 'ok';
+  const label = !online ? 'Hors ligne' : sync.status === 'off' ? 'Enregistré sur cet appareil' : sync.status === 'syncing' ? 'Synchronisation…' : sync.status === 'error' ? 'Synchro en échec' : 'Tout est à jour';
+  const color = !online || sync.status === 'error' ? 'var(--warn)' : sync.status === 'off' ? 'var(--ink-3)' : 'var(--ok)';
   return (
-    <div style={{ padding: '0 8px' }}>
-      <span className={`badge ${cls}`}>{label}{sync.pending > 0 && sync.status !== 'off' ? ` · ${sync.pending} en attente` : ''}</span>
+    <div className="row tiny" style={{ padding: '0 12px', gap: 8, color: 'var(--ink-3)', fontWeight: 600 }}>
+      <span style={{ width: 8, height: 8, borderRadius: 4, background: color }} />
+      {label}{sync.pending > 0 && sync.status !== 'off' ? ` · ${sync.pending} en attente` : ''}
     </div>
   );
 }
 
-/* ------------------------------ Connexion par code PIN ------------------------------ */
+/* ------------------------------ Connexion ------------------------------ */
 function Login({ users, onIn }: { users: User[]; onIn: (u: User) => void }) {
   const [sel, setSel] = useState<User | null>(users.length === 1 ? users[0] : null);
   const [pin, setPin] = useState('');
@@ -174,101 +203,140 @@ function Login({ users, onIn }: { users: User[]; onIn: (u: User) => void }) {
   const demo = useLiveQuery(() => db.settings.get('demo'), []);
   const tryPin = async (p: string) => {
     if (!sel || p.length < 4) return;
-    if (await checkPin(sel, p)) { await audit(sel.id, 'Connexion'); onIn(sel); }
+    if (await checkPin(sel, p)) { await audit(sel.id, 'login'); onIn(sel); }
     else { setBad(true); setPin(''); setTimeout(() => setBad(false), 400); }
   };
+  const hour = new Date().getHours();
   return (
-    <div style={{ minHeight: '100dvh', display: 'grid', placeItems: 'center', padding: 16 }}>
-      <div className="stack-lg" style={{ width: 'min(420px, 100%)' }}>
-        <div className="brandmark" style={{ justifyContent: 'center', fontSize: '1.2rem' }}><span className="logo"><Store size={20} color="#fff" /></span>AYOKA QUINCA</div>
+    <div style={{ minHeight: '100dvh', display: 'grid', placeItems: 'center', padding: '24px max(20px, env(safe-area-inset-right, 0px)) 24px max(20px, env(safe-area-inset-left, 0px))' }}>
+      <div className="stack-lg" style={{ width: 'min(440px, 100%)' }}>
+        <div style={{ display: 'flex', justifyContent: 'center' }}><Logo size={44} /></div>
         {!sel ? (
-          <div className="stack">
-            <h1 style={{ textAlign: 'center' }}>Qui êtes-vous ?</h1>
-            <div className="list">
+          <div className="stack-lg" style={{ animation: 'rise .4s var(--ease)' }}>
+            <div style={{ textAlign: 'center' }} className="stack">
+              <h1 className="display" style={{ fontSize: '2.6rem' }}>{hour < 13 ? 'Bonjour' : 'Bonsoir'}.<br /><em>Qui travaille ?</em></h1>
+            </div>
+            <div className="grid-2" style={users.length > 2 ? { gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))' } : undefined}>
               {users.map((u) => (
-                <button key={u.id} className="item" onClick={() => setSel(u)}>
-                  <Avatar name={u.name} color={u.color} />
-                  <div className="grow"><div className="title">{u.name}</div><div className="sub">{ROLE_LABEL[u.role]}</div></div>
+                <button key={u.id} className="card stack" style={{ alignItems: 'center', padding: '22px 12px', textAlign: 'center', cursor: 'pointer' }} onClick={() => setSel(u)}>
+                  <Avatar name={u.name} color={u.color} size="lg" />
+                  <div><div style={{ fontWeight: 700 }}>{u.name}</div><div className="tiny muted">{ROLE_LABEL[u.role]}</div></div>
                 </button>
               ))}
             </div>
           </div>
         ) : (
-          <div className="stack" style={{ alignItems: 'center' }}>
-            <Avatar name={sel.name} color={sel.color} lg />
-            <h1>Bonjour {sel.name}</h1>
+          <div className="stack" style={{ alignItems: 'center', animation: 'rise .35s var(--ease)' }}>
+            <Avatar name={sel.name} color={sel.color} size="lg" />
+            <h1>{sel.name}</h1>
             <div className="muted">Tapez votre code secret</div>
             <div className={`pin-dots ${bad ? 'shake' : ''}`}>{[0, 1, 2, 3].map((i) => <span key={i} className={pin.length > i ? 'on' : ''} />)}</div>
-            {bad && <div className="danger-t" style={{ fontWeight: 700 }}>Code incorrect, réessayez</div>}
-            <div style={{ width: '100%' }}>
-              <NumPad onKey={(k) => { const n = applyKey(pin, k, 4); setPin(n); if (n.length === 4) tryPin(n); }} />
-            </div>
-            {users.length > 1 && <button className="btn ghost" onClick={() => { setSel(null); setPin(''); }}>Ce n'est pas moi</button>}
+            {bad && <div className="danger-t small" style={{ fontWeight: 700, marginTop: -10 }}>Ce n'est pas le bon code</div>}
+            <div style={{ width: '100%' }}><NumPad onKey={(k) => { const n = applyKey(pin, k, 4); setPin(n); if (n.length === 4) tryPin(n); }} /></div>
+            {users.length > 1 && <button className="btn ghost" onClick={() => { setSel(null); setPin(''); }}><ChevronLeft size={18} />Changer de personne</button>}
           </div>
         )}
-        {demo?.value === true && <div className="banner info">Démonstration — codes : Sofiatou 1234 · Caissière 2222 · Vendeur 3333</div>}
+        {demo?.value === true && <div className="banner info" style={{ justifyContent: 'center' }}>Démonstration · codes : Sofiatou 1234 · Caissière 2222 · Vendeur 3333</div>}
       </div>
     </div>
   );
 }
 
-/* ------------------------------ Premier démarrage ------------------------------ */
-function Onboarding() {
-  const [step, setStep] = useState<'choice' | 'owner' | 'join'>('choice');
+/* ------------------------------ Bienvenue (premier lancement) ------------------------------ */
+const PREVIEW_ZONES: Location[] = PLAN_ZONES.map((z, i) => ({ ...z, id: 'z' + i, updatedAt: 0 }));
+
+function Welcome() {
+  const [step, setStep] = useState<'intro' | 'owner' | 'join'>('intro');
+  const [name, setName] = useState('');
+  const [pin, setPin] = useState('');
   const [url, setUrl] = useState('');
   const [token, setToken] = useState('');
   const [err, setErr] = useState('');
-  const [name, setName] = useState('');
-  const [pin, setPin] = useState('');
   const [busy, setBusy] = useState(false);
+  const darkVars = { '--map-bg': '#141414', '--surface': '#141414', '--ink': '#f4f4f5', '--ink-3': '#9a9aa0', '--accent-ink': '#ff9a6b' } as CSSProperties;
   return (
-    <div style={{ minHeight: '100dvh', display: 'grid', placeItems: 'center', padding: 16 }}>
-      <div className="stack-lg" style={{ width: 'min(460px, 100%)' }}>
-        <div className="brandmark" style={{ justifyContent: 'center', fontSize: '1.2rem' }}><span className="logo"><Store size={20} color="#fff" /></span>AYOKA QUINCA</div>
-        {step === 'choice' ? (
-          <div className="stack">
-            <h1 style={{ textAlign: 'center' }}>Bienvenue</h1>
-            <p className="muted" style={{ textAlign: 'center', margin: 0 }}>Ventes, stock et crédits de la boutique, même sans Internet.</p>
-            <button className="action-tile main" disabled={busy} onClick={() => setStep('owner')}>
-              <span className="ic"><Store size={24} /></span>
-              <span>Commencer avec ma boutique<br /><span className="small" style={{ fontWeight: 500, opacity: .9 }}>Je crée mon compte et j'ajoute mes produits</span></span>
+    <div className="welcome">
+      <div className="pane">
+        <Logo size={44} />
+        {step === 'intro' && (
+          <>
+            <div className="stack" style={{ gap: 18, animation: 'rise .5s var(--ease)' }}>
+              <h1 className="display hero-title">Fini les cahiers.<br /><em>Votre boutique</em>, en un coup d'œil.</h1>
+              <p className="soft-t" style={{ fontSize: '1.08rem', maxWidth: 440 }}>Ventes, stock et crédits au même endroit, sur le téléphone comme sur l'ordinateur. Même quand Internet coupe.</p>
+            </div>
+            <div className="stack" style={{ gap: 18 }}>
+              {[
+                { icon: ShoppingCart, t: 'Vendre en deux gestes', s: 'Le produit, la quantité. Le total et la monnaie se calculent seuls.' },
+                { icon: MapPin, t: 'Savoir où est chaque produit', s: 'Du hall à l’arrière-cour, chaque zone a sa couleur.' },
+                { icon: HandCoins, t: 'Suivre qui vous doit quoi', s: 'Crédits, avances et rappels polis par WhatsApp.' },
+                { icon: CloudOff, t: 'Rien ne se perd', s: 'Tout est gardé dans l’appareil puis envoyé dès que le réseau revient.' },
+              ].map((f) => (
+                <div key={f.t} className="feature">
+                  <span className="glyph"><f.icon size={21} /></span>
+                  <div><div style={{ fontWeight: 700 }}>{f.t}</div><div className="small muted">{f.s}</div></div>
+                </div>
+              ))}
+            </div>
+            <div className="stack">
+              <button className="btn accent lg block" disabled={busy} onClick={() => setStep('owner')}>Commencer avec ma boutique<ArrowRight size={20} /></button>
+              <button className="btn lg block" disabled={busy} onClick={async () => { setBusy(true); await seedDemo(); }}>{busy ? 'Préparation des exemples…' : 'Découvrir avec des exemples'}</button>
+              <button className="btn ghost" disabled={busy} onClick={() => setStep('join')}>Cet appareil rejoint une boutique déjà installée</button>
+            </div>
+          </>
+        )}
+        {step === 'owner' && (
+          <div className="stack-lg" style={{ animation: 'rise .35s var(--ease)' }}>
+            <div className="stack">
+              <span className="eyebrow">Étape 1 sur 1</span>
+              <h1 className="display" style={{ fontSize: '2.6rem' }}>Votre compte <em>responsable</em></h1>
+              <p className="soft-t">Les zones du magasin et les catégories sont déjà prêtes. Vous ajouterez l'équipe et les produits ensuite.</p>
+            </div>
+            <Field label="Votre prénom"><input id="owner-name" className="input lg" value={name} onChange={(e) => setName(e.target.value)} autoFocus /></Field>
+            <Field label="Votre code secret (4 chiffres)" hint="Il sert à ouvrir l'application. Ne le donnez à personne.">
+              <input id="owner-pin" className="input lg num" inputMode="numeric" maxLength={4} value={pin} onChange={(e) => setPin(e.target.value.replace(/\D/g, ''))} type="password" />
+            </Field>
+            <button className="btn accent lg block" disabled={!name.trim() || pin.length !== 4 || busy}
+              onClick={async () => { setBusy(true); await seedStructure(); const u = await createOwner(name.trim(), pin); localStorage.setItem('aq.session', u.id); location.reload(); }}>
+              Créer et entrer<ArrowRight size={20} />
             </button>
-            <button className="action-tile" disabled={busy} onClick={async () => { setBusy(true); await seedDemo(); }}>
-              <span className="ic"><Package size={24} /></span>
-              <span>Essayer avec des exemples<br /><span className="small muted" style={{ fontWeight: 500 }}>Produits et ventes fictifs, pour découvrir</span></span>
-            </button>
-            <button className="btn ghost lg" disabled={busy} onClick={() => setStep('join')}>Cet appareil rejoint une boutique déjà installée</button>
+            <button className="btn ghost" onClick={() => setStep('intro')}><ChevronLeft size={18} />Retour</button>
           </div>
-        ) : step === 'join' ? (
-          <div className="stack">
-            <h1>Rejoindre la boutique</h1>
-            <p className="muted" style={{ margin: 0 }}>Demandez l'adresse et la clé à la responsable (Paramètres › Synchronisation).</p>
-            <Field label="Adresse du serveur"><input className="input lg" value={url} onChange={(e) => setUrl(e.target.value.trim())} placeholder="https://…" /></Field>
-            <Field label="Clé de la boutique"><input className="input lg" type="password" value={token} onChange={(e) => setToken(e.target.value.trim())} /></Field>
+        )}
+        {step === 'join' && (
+          <div className="stack-lg" style={{ animation: 'rise .35s var(--ease)' }}>
+            <div className="stack">
+              <h1 className="display" style={{ fontSize: '2.6rem' }}>Rejoindre <em>la boutique</em></h1>
+              <p className="soft-t">Demandez l'adresse et la clé à la responsable (Paramètres › Synchronisation).</p>
+            </div>
+            <Field label="Adresse du serveur"><input id="join-url" className="input lg" value={url} onChange={(e) => setUrl(e.target.value.trim())} placeholder="https://…" /></Field>
+            <Field label="Clé de la boutique"><input id="join-token" className="input lg" type="password" value={token} onChange={(e) => setToken(e.target.value.trim())} /></Field>
             {err && <div className="banner warn">{err}</div>}
-            <button className="btn primary lg" disabled={!url || !token || busy} onClick={async () => {
+            <button className="btn accent lg block" disabled={!url || !token || busy} onClick={async () => {
               setBusy(true); setErr('');
               await setSetting('sync', { url, token });
               await syncNow();
               if (!(await db.users.count())) { setErr("Impossible de récupérer les données. Vérifiez l'adresse, la clé et la connexion Internet."); setBusy(false); }
             }}>{busy ? 'Récupération des données…' : 'Se connecter'}</button>
-            <button className="btn ghost" onClick={() => setStep('choice')}>Retour</button>
-          </div>
-        ) : (
-          <div className="stack">
-            <h1>Votre compte responsable</h1>
-            <Field label="Votre prénom"><input className="input lg" value={name} onChange={(e) => setName(e.target.value)} autoFocus /></Field>
-            <Field label="Choisissez un code secret (4 chiffres)" hint="Il sert à ouvrir l'application. Ne le donnez à personne.">
-              <input className="input lg num" inputMode="numeric" maxLength={4} value={pin} onChange={(e) => setPin(e.target.value.replace(/\D/g, ''))} type="password" />
-            </Field>
-            <button className="btn primary lg" disabled={!name.trim() || pin.length !== 4 || busy}
-              onClick={async () => { setBusy(true); await seedStructure(); const u = await createOwner(name.trim(), pin); localStorage.setItem('aq.session', u.id); location.reload(); }}>
-              Créer et entrer
-            </button>
-            <button className="btn ghost" onClick={() => setStep('choice')}>Retour</button>
+            <button className="btn ghost" onClick={() => setStep('intro')}><ChevronLeft size={18} />Retour</button>
           </div>
         )}
       </div>
+      <aside className="art" style={darkVars}>
+        <span className="eyebrow">Le magasin, tel qu'il est</span>
+        <h2 className="display" style={{ fontSize: '2.4rem', color: '#f4f4f5' }}>Six zones, <em>une seule</em> vue.</h2>
+        <div style={{ maxWidth: 560 }}><StoreMap locations={PREVIEW_ZONES} highlight={new Set(['z1'])} /></div>
+        <div className="row" style={{ gap: 12, flexWrap: 'wrap' }}>
+          <div style={{ background: '#1f1f22', borderRadius: 18, padding: '14px 18px', display: 'flex', alignItems: 'center', gap: 12 }}>
+            <CheckCircle2 size={22} color="#3ccb7f" />
+            <div><div className="tiny" style={{ color: '#9a9aa0' }}>Vente JF-0042 · Espèces</div><div style={{ fontWeight: 750, fontSize: '1.15rem' }} className="num">{money(94400)}</div></div>
+          </div>
+          <div style={{ background: '#1f1f22', borderRadius: 18, padding: '14px 18px' }}>
+            <div className="tiny" style={{ color: '#9a9aa0' }}>Ciment CPJ 35 · Entrepôt ciment</div>
+            <div style={{ fontWeight: 750, fontSize: '1.15rem' }}>210 sacs</div>
+          </div>
+        </div>
+        <div className="row tiny" style={{ color: '#9a9aa0', gap: 10 }}><LogoMark size={22} />Conçu pour AYOKA QUINCA, Sèmè-Podji</div>
+      </aside>
     </div>
   );
 }

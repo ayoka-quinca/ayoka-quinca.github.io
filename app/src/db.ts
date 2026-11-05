@@ -10,6 +10,7 @@
  * à la file d'envoi (`outbox`) pour la synchronisation avec le serveur.
  */
 import Dexie, { type Table } from 'dexie';
+import { money } from './domain/format';
 
 export type Role = 'responsable' | 'caissiere' | 'employe';
 export type PayMethod = 'especes' | 'mtn' | 'moov' | 'credit';
@@ -170,10 +171,51 @@ export interface User extends Base {
   color: string;
 }
 
+export interface Change {
+  field: string;
+  before: unknown;
+  after: unknown;
+}
+
+/**
+ * Journal d'activité : une ligne par action, avec l'auteur, la date,
+ * l'objet concerné et les valeurs avant → après.
+ */
 export interface AuditEntry extends Base {
   userId: string;
+  /** create | update | login | logout | stock | inventory | … */
   action: string;
   detail?: string;
+  at: number;
+  table?: string;
+  recordId?: string;
+  label?: string;
+  changes?: Change[];
+  /** Action sensible à vérifier par la responsable (premier niveau de détection d'anomalies). */
+  flag?: string;
+}
+
+export interface QuoteItem {
+  productId: string;
+  name: string;
+  unit: string;
+  qty: number;
+  unitPrice: number;
+}
+
+/** Facture proforma (devis) : n'affecte ni le stock ni la caisse tant qu'elle n'est pas transformée en vente. */
+export interface Quote extends Base {
+  number: string;
+  clientId?: string;
+  clientName?: string;
+  clientPhone?: string;
+  items: QuoteItem[];
+  total: number;
+  validUntil: number;
+  status: 'ouvert' | 'converti' | 'annule';
+  saleId?: string;
+  notes?: string;
+  userId: string;
   at: number;
 }
 
@@ -209,6 +251,7 @@ export class AppDB extends Dexie {
   inventories!: Table<Inventory, string>;
   users!: Table<User, string>;
   audit!: Table<AuditEntry, string>;
+  quotes!: Table<Quote, string>;
   settings!: Table<Setting, string>;
   outbox!: Table<OutboxEntry, number>;
   stock!: Table<StockRow, [string, string]>;
@@ -232,6 +275,11 @@ export class AppDB extends Dexie {
       outbox: '++seq, table',
       stock: '[productId+locationId], productId, locationId',
     });
+    // V2 : journal enrichi (recherche par objet et par alerte) + factures proforma.
+    this.version(2).stores({
+      audit: 'id, at, userId, recordId, flag',
+      quotes: 'id, number, clientId, status, at',
+    });
   }
 }
 
@@ -251,6 +299,7 @@ export const SYNC_TABLES = [
   'inventories',
   'users',
   'audit',
+  'quotes',
 ] as const;
 export type SyncTable = (typeof SYNC_TABLES)[number];
 
@@ -279,17 +328,104 @@ export function getDeviceCode(): string {
   return c;
 }
 
-/** Écrit des enregistrements et les met en file d'envoi. À appeler dans une transaction incluant db.outbox. */
+/** Personne connectée : chaque écriture lui est attribuée dans le journal. */
+let actor = '';
+export function setActor(userId: string) {
+  actor = userId;
+}
+
+const IGNORED = new Set(['updatedAt', 'deviceId', 'id', 'createdAt']);
+const SECRET = new Set(['pinHash']);
+
+function labelOf(table: SyncTable, r: any): string {
+  switch (table) {
+    case 'sales': return `Vente ${r.number}`;
+    case 'quotes': return `Proforma ${r.number}`;
+    case 'purchases': return `Réception${r.invoiceNumber ? ' ' + r.invoiceNumber : ''} · ${money(r.total)}`;
+    case 'payments': return r.kind === 'reprise' ? `Dette reprise ${money(-r.amount)}` : r.amount >= 0 ? `Paiement ${money(r.amount)}` : `Remboursement ${money(-r.amount)}`;
+    case 'inventories': return 'Inventaire';
+    default: return r.name ?? r.number ?? table;
+  }
+}
+
+function flagOf(table: SyncTable, prev: any, r: any): string | undefined {
+  if (table === 'products' && prev) {
+    if (r.archived && !prev.archived) return 'Produit retiré du catalogue';
+    if (r.salePrice < prev.salePrice * 0.9) return `Prix de vente baissé de ${Math.round((1 - r.salePrice / prev.salePrice) * 100)} %`;
+    if (r.salePrice < r.purchasePrice && prev.salePrice >= prev.purchasePrice) return "Prix de vente sous le prix d'achat";
+  }
+  if (table === 'sales' && !prev) {
+    if (r.items.some((i: any) => i.unitPrice < i.cost)) return 'Vendu à perte';
+    const list = r.items.reduce((t: number, i: any) => t + i.listPrice * i.qty, 0);
+    if (list > 0 && r.total < list * 0.85) return `Remise de ${Math.round((1 - r.total / list) * 100)} %`;
+  }
+  if (table === 'sales' && prev && r.cancelled && !prev.cancelled) return 'Vente annulée';
+  if (table === 'payments' && !prev && r.amount < 0) return r.kind === 'reprise' ? 'Dette reprise du cahier' : 'Argent rendu au client';
+  if (table === 'users' && prev && (prev.role !== r.role || prev.active !== r.active || prev.pinHash !== r.pinHash)) return 'Accès modifié';
+  return undefined;
+}
+
+function diff(prev: any, r: any): Change[] {
+  const out: Change[] = [];
+  for (const k of new Set([...Object.keys(prev ?? {}), ...Object.keys(r)])) {
+    if (IGNORED.has(k)) continue;
+    const a = prev?.[k], b = r[k];
+    if (JSON.stringify(a) === JSON.stringify(b)) continue;
+    out.push(SECRET.has(k) ? { field: k, before: '••••', after: '••••' } : { field: k, before: a, after: b });
+  }
+  return out;
+}
+
+function flushAudit(entries: AuditEntry[]) {
+  if (!entries.length) return;
+  Dexie.ignoreTransaction(() =>
+    db.transaction('rw', db.audit, db.outbox, async () => {
+      await db.audit.bulkPut(entries);
+      await db.outbox.bulkAdd(entries.map((e) => ({ table: 'audit', id: e.id, at: e.at })));
+    }),
+  ).catch(() => {});
+}
+
+/** Inscrit une entrée dans le journal (après la fin de la transaction en cours, si elle réussit). */
+export function journal(e: Omit<AuditEntry, 'id' | 'updatedAt' | 'at' | 'userId'> & { userId?: string; at?: number }) {
+  const entry: AuditEntry = { id: uid(), at: Date.now(), userId: actor, updatedAt: Date.now(), deviceId: getDeviceId(), ...e } as AuditEntry;
+  const tx = Dexie.currentTransaction;
+  if (tx) tx.on('complete', () => flushAudit([entry]));
+  else flushAudit([entry]);
+}
+
+/** Écrit des enregistrements, les met en file d'envoi et les inscrit au journal. À appeler dans une transaction incluant db.outbox. */
 export async function write<T extends Base>(table: SyncTable, records: T | T[]): Promise<void> {
   const list = Array.isArray(records) ? records : [records];
   const now = Date.now();
   const deviceId = getDeviceId();
+  const entries: AuditEntry[] = [];
+  const store = db[table] as unknown as Table<T, string>;
+  if (table !== 'audit' && table !== 'movements') {
+    const prevs = await store.bulkGet(list.map((r) => r.id));
+    list.forEach((r, i) => {
+      const prev = prevs[i];
+      if (prev && table === 'inventories' && (r as any).status === 'en_cours') return; // comptage en cours : pas de bruit
+      const changes = prev ? diff(prev, r) : [];
+      if (prev && !changes.length) return;
+      entries.push({
+        id: uid(), userId: actor, at: now, updatedAt: now, deviceId, action: prev ? 'update' : 'create',
+        table, recordId: r.id, label: labelOf(table, r), changes: prev ? changes : undefined, flag: flagOf(table, prev, r),
+        detail: !prev && table === 'sales' ? `${money((r as any).total)} · ${(r as any).method}` : undefined,
+      });
+    });
+  }
   for (const r of list) {
     r.updatedAt = now;
     r.deviceId = deviceId;
   }
-  await (db[table] as unknown as Table<T, string>).bulkPut(list);
+  await store.bulkPut(list);
   await db.outbox.bulkAdd(list.map((r) => ({ table, id: r.id, at: now })));
+  if (entries.length) {
+    const tx = Dexie.currentTransaction;
+    if (tx) tx.on('complete', () => flushAudit(entries));
+    else flushAudit(entries);
+  }
 }
 
 export async function getSetting<T>(key: string, fallback: T): Promise<T> {
@@ -308,6 +444,9 @@ export interface Company {
   phone: string;
   email: string;
   ifu?: string;
+  rccm?: string;
+  /** Assujetti à la TVA (18 %) : affiche la part de TVA sur les proformas. */
+  vat?: boolean;
   footer: string;
 }
 
@@ -318,5 +457,7 @@ export const DEFAULT_COMPANY: Company = {
   phone: '01 96 42 52 81',
   email: 'mouritalacisf@gmail.com',
   ifu: '',
+  rccm: '',
+  vat: false,
   footer: 'Merci pour votre confiance !',
 };

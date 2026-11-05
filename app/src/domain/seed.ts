@@ -10,7 +10,7 @@ import { rebuildStock } from './ops';
 // Plan : bâtiment de 20,2 m × 14,1 m (source : PLAN-AYOCA-QUINCA.pdf)
 export const PLAN = { w: 20.2, h: 14.1 };
 
-const ZONES: Omit<Location, 'id' | 'updatedAt'>[] = [
+export const PLAN_ZONES: Omit<Location, 'id' | 'updatedAt'>[] = [
   { code: 'HALL', name: "Hall d'entrée", color: '#D9920F', rect: { x: 0, y: 9, w: 20.2, h: 5.1 }, sellable: true, order: 1, description: 'Exposition, petits articles, forte rotation' },
   { code: 'MAG', name: 'Magasin principal', color: '#2F6FB0', rect: { x: 3, y: 2.1, w: 17.2, h: 6.9 }, sellable: true, order: 2, description: 'Raccords, tuyaux, plomberie, serrurerie, électricité, outils' },
   { code: 'CIM', name: 'Entrepôt ciment', color: '#5B6472', rect: { x: 0, y: 6.5, w: 3, h: 2.5 }, sellable: true, order: 3, description: 'Sacs de ciment' },
@@ -39,7 +39,7 @@ const USER_COLORS = ['#0B6E4F', '#B4540A', '#2F6FB0', '#7B4FB0', '#9F1239'];
 export async function seedStructure(): Promise<{ loc: Record<string, string>; cat: Record<string, string> }> {
   const loc: Record<string, string> = {};
   const locations: Location[] = [];
-  for (const z of ZONES) {
+  for (const z of PLAN_ZONES) {
     const id = uid();
     loc[z.code] = id;
     locations.push({ ...z, id, updatedAt: Date.now() });
@@ -47,7 +47,7 @@ export async function seedStructure(): Promise<{ loc: Record<string, string>; ca
   SHELVES.forEach((s, i) => {
     const id = uid();
     loc[s.code] = id;
-    const parent = ZONES.find((z) => z.code === s.parent)!;
+    const parent = PLAN_ZONES.find((z) => z.code === s.parent)!;
     locations.push({ id, code: s.code, name: s.name, parentId: loc[s.parent], color: parent.color, rect: s.rect, sellable: true, order: 10 + i, updatedAt: Date.now() });
   });
   const cat: Record<string, string> = {};

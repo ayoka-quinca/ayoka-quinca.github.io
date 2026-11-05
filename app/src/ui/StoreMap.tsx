@@ -35,14 +35,14 @@ export function StoreMap({ locations, selected, highlight, counts, onSelect, com
           const narrow = r.w < 4;
           return (
             <g key={z.id} className="zone-r" onClick={() => onSelect?.(z.id)} opacity={dim && !on ? 0.45 : 1}>
-              <rect x={r.x} y={r.y} width={r.w} height={r.h} fill={z.color} fillOpacity={on ? 0.32 : 0.14}
-                stroke={z.color} strokeWidth={on ? 0.16 : 0.07} />
+              <rect x={r.x + 0.06} y={r.y + 0.06} width={r.w - 0.12} height={r.h - 0.12} rx={0.35} fill={z.color} fillOpacity={on ? 0.3 : 0.1}
+                stroke={z.color} strokeOpacity={on ? 1 : 0.35} strokeWidth={on ? 0.12 : 0.05} />
               <text x={r.x + r.w / 2} y={r.y + r.h / 2 - (n !== undefined && !compact ? 0.15 : -0.2)} textAnchor="middle"
-                fontSize={narrow ? 0.42 : 0.6} fontWeight={750} fill="var(--ink)">
+                fontSize={narrow ? 0.42 : 0.58} fontWeight={700} fill="var(--ink)">
                 {narrow || compact ? SHORT[z.code] ?? z.name : z.name}
               </text>
               {n !== undefined && !compact && (
-                <text x={r.x + r.w / 2} y={r.y + r.h / 2 + 0.6} textAnchor="middle" fontSize={0.4} fill="var(--ink-2)">
+                <text x={r.x + r.w / 2} y={r.y + r.h / 2 + 0.6} textAnchor="middle" fontSize={0.38} fill="var(--ink-3)">
                   {n} article{n > 1 ? 's' : ''}
                 </text>
               )}
@@ -54,7 +54,7 @@ export function StoreMap({ locations, selected, highlight, counts, onSelect, com
           const vertical = r.h > r.w;
           return (
             <g key={s.id} className="zone-r" onClick={(e) => { e.stopPropagation(); onSelect?.(s.id); }} opacity={dim && !isOn(s.id) ? 0.5 : 1}>
-              <rect x={r.x} y={r.y} width={r.w} height={r.h} rx={0.1} fill={s.color} fillOpacity={isOn(s.id) ? 0.9 : 0.4} stroke={s.color} strokeWidth={0.05} />
+              <rect x={r.x} y={r.y} width={r.w} height={r.h} rx={0.22} fill={s.color} fillOpacity={isOn(s.id) ? 0.95 : 0.28} />
               <text x={r.x + r.w / 2} y={r.y + r.h / 2} textAnchor="middle" dominantBaseline="central" fontSize={0.36} fontWeight={700}
                 fill={isOn(s.id) ? '#fff' : 'var(--ink)'} transform={vertical ? `rotate(-90 ${r.x + r.w / 2} ${r.y + r.h / 2})` : undefined}>
                 {s.name}
@@ -63,10 +63,9 @@ export function StoreMap({ locations, selected, highlight, counts, onSelect, com
           );
         })}
         {DOORS.map(([x1, y1, x2, y2], i) => (
-          <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} stroke="var(--paper)" strokeWidth={0.22} strokeLinecap="butt" />
+          <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} stroke="var(--map-bg, var(--surface))" strokeWidth={0.22} strokeLinecap="butt" />
         ))}
-        <rect x={0} y={0} width={PLAN.w} height={PLAN.h} fill="none" stroke="var(--ink-2)" strokeWidth={0.05} strokeDasharray="0.01 0" opacity={0.25} />
-        <text x={9.7} y={PLAN.h + 0.75} textAnchor="middle" fontSize={0.42} fontWeight={700} fill="var(--brand)">▲ Entrée clients</text>
+        <text x={9.7} y={PLAN.h + 0.75} textAnchor="middle" fontSize={0.4} fontWeight={700} fill="var(--accent-ink)">▲ Entrée clients</text>
       </svg>
     </div>
   );

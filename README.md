@@ -10,7 +10,7 @@ Application pour la quincaillerie **AYOKA QUINCA** (Sèmè-Podji, Bénin) : vent
 cd app && npm install && npm run dev
 ```
 
-Ouvrir http://localhost:5173 → « Essayer avec des exemples ».
+Ouvrir http://localhost:5173 → « Découvrir avec des exemples ».
 Codes de démonstration : **Sofiatou 1234** (responsable) · **Caissière 2222** · **Vendeur 3333**.
 
 ## Avec synchronisation entre appareils
@@ -30,11 +30,13 @@ Le serveur sert l'application et la synchronisation sur http://localhost:8080. I
 | # | Document | Contenu |
 |---|---|---|
 | 1 | [Analyse et choix](docs/01-analyse-et-choix.md) | Lecture du cahier des charges, écarts relevés, décisions justifiées |
-| 2 | [Design system « Comptoir »](docs/02-design-system.md) | Persona, principes, couleurs, composants, règles de rédaction |
+| 2 | [Design system « Comptoir » V2](docs/02-design-system.md) | Règles, identité, couleurs, typographie, composants |
 | 3 | [Architecture](docs/03-architecture.md) | Modèle de données, synchronisation hors ligne, sécurité, droits, tests |
 | 4 | [Déploiement](docs/04-deploiement.md) | Plan en 6 semaines : matériel, serveur, saisie du stock, formation, pilote, bascule |
-| 5 | [Maintenance et évolutions](docs/05-maintenance-evolutions.md) | Routines, sauvegardes, mises à jour, limites connues, feuille de route V1.1 → V2 |
+| 5 | [Maintenance et évolutions](docs/05-maintenance-evolutions.md) | Routines, sauvegardes, mises à jour, limites connues, feuille de route V2.1 → V5 |
 | 6 | [Fiches mémo](docs/06-fiches-memo.md) | Une page par rôle, à imprimer |
+
+Historique des versions : [CHANGELOG.md](CHANGELOG.md).
 
 ## Vérifications
 

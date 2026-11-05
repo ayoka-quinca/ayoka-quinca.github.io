@@ -1,4 +1,4 @@
-import { db, write, uid, type Role, type User } from '../db';
+import { db, write, uid, journal, type Role, type User } from '../db';
 
 /** Rôles et droits. Les libellés sont ceux que l'équipe utilise au quotidien. */
 export const ROLE_LABEL: Record<Role, string> = {
@@ -63,8 +63,7 @@ export async function setPin(user: User, pin: string) {
   await db.transaction('rw', db.users, db.outbox, () => write('users', u));
 }
 
+/** Action simple (connexion, déconnexion…) inscrite au journal. */
 export async function audit(userId: string, action: string, detail?: string) {
-  await db.transaction('rw', db.audit, db.outbox, () =>
-    write('audit', { id: uid(), userId, action, detail, at: Date.now(), updatedAt: 0 }),
-  );
+  journal({ userId, action, detail });
 }

@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { Building2, Users, Tags, CloudUpload, HardDriveDownload, FileSpreadsheet, History, Plus, Trash2 } from 'lucide-react';
 import { db, write, uid, getSetting, setSetting, DEFAULT_COMPANY, type Company, type Role, type User } from '../db';
-import { createUser, setPin, ROLE_LABEL, audit } from '../domain/auth';
+import { createUser, setPin, ROLE_LABEL } from '../domain/auth';
+import { Link } from 'react-router-dom';
 import { when } from '../domain/format';
 import { csvTemplate, download, exportBackup, importBackup, importProductsCsv } from '../domain/backup';
 import { onSync, syncNow, type SyncConfig, type SyncState } from '../domain/sync';
@@ -26,7 +27,7 @@ export default function SettingsPage() {
           <ImportCard />
           <CategoriesCard />
           <TextSize />
-          <Journal />
+          <JournalLink />
           <Danger />
         </div>
       </main>
@@ -67,7 +68,7 @@ function Team() {
               <input className="input lg num" inputMode="numeric" maxLength={4} type="password" value={pin} onChange={(e) => setPinV(e.target.value.replace(/\D/g, ''))} />
             </Field>
             <button className="btn primary lg" disabled={!name.trim() || (edit === 'new' ? pin.length !== 4 : pin.length > 0 && pin.length !== 4)} onClick={async () => {
-              if (edit === 'new') { await createUser(name.trim(), role, pin, COLORS[users.length % COLORS.length]); await audit(me.id, 'Utilisateur créé', name); }
+              if (edit === 'new') { await createUser(name.trim(), role, pin, COLORS[users.length % COLORS.length]); }
               else {
                 await db.transaction('rw', db.users, db.outbox, () => write('users', { ...edit, name: name.trim(), role }));
                 if (pin) await setPin({ ...edit, name: name.trim(), role }, pin);
@@ -77,7 +78,7 @@ function Team() {
             {edit !== 'new' && edit.id !== me.id && (
               <button className="btn ghost danger-t" onClick={async () => {
                 await db.transaction('rw', db.users, db.outbox, () => write('users', { ...edit, active: !edit.active }));
-                await audit(me.id, edit.active ? 'Utilisateur désactivé' : 'Utilisateur réactivé', edit.name); setEdit(null);
+                setEdit(null);
               }}>{edit.active ? 'Désactiver ce compte' : 'Réactiver ce compte'}</button>
             )}
           </div>
@@ -92,11 +93,12 @@ function CompanyCard() {
   const [c, setC] = useState<Company | null>(null);
   useEffect(() => { getSetting('company', DEFAULT_COMPANY).then(setC); }, []);
   if (!c) return null;
-  const f = (k: keyof Company, label: string) => <Field label={label}><input className="input" value={c[k] ?? ''} onChange={(e) => setC({ ...c, [k]: e.target.value })} /></Field>;
+  const f = (k: 'name' | 'owner' | 'address' | 'phone' | 'email' | 'ifu' | 'rccm' | 'footer', label: string) => <Field label={label}><input id={`co-${k}`} className="input" value={c[k] ?? ''} onChange={(e) => setC({ ...c, [k]: e.target.value })} /></Field>;
   return (
     <div className="card stack">
       <div className="row"><Building2 size={20} /><h3>Entreprise (en-tête des factures)</h3></div>
-      {f('name', 'Nom')}{f('address', 'Adresse')}{f('phone', 'Téléphone')}{f('email', 'E-mail')}{f('ifu', 'N° IFU')}{f('footer', 'Message en bas du ticket')}
+      {f('name', 'Nom')}{f('address', 'Adresse')}{f('phone', 'Téléphone')}{f('email', 'E-mail')}{f('owner', 'Responsable (signature)')}{f('ifu', 'N° IFU')}{f('rccm', 'N° RCCM')}{f('footer', 'Message en bas du ticket')}
+      <label className="row" style={{ gap: 10 }}><input id="co-vat" type="checkbox" checked={!!c.vat} onChange={(e) => setC({ ...c, vat: e.target.checked })} style={{ width: 22, height: 22 }} />Assujetti à la TVA (18 %) : afficher la TVA sur les proformas</label>
       <button className="btn primary" onClick={async () => { await setSetting('company', c); toast({ text: 'Enregistré' }); }}>Enregistrer</button>
     </div>
   );
@@ -184,17 +186,13 @@ function CategoriesCard() {
   );
 }
 
-function Journal() {
-  const entries = useLiveQuery(() => db.audit.orderBy('at').reverse().limit(40).toArray(), []) ?? [];
-  const users = useUsers();
+function JournalLink() {
   return (
-    <div className="card stack">
-      <div className="row"><History size={20} /><h3>Journal des connexions</h3></div>
-      <div className="list" style={{ maxHeight: 320, overflowY: 'auto' }}>
-        {entries.map((e) => <div key={e.id} className="item" style={{ minHeight: 48 }}><div className="grow"><div className="title small">{users.get(e.userId)?.name} · {e.action}</div>{e.detail && <div className="sub">{e.detail}</div>}</div><span className="small muted">{when(e.at)}</span></div>)}
-        {entries.length === 0 && <div className="empty small">Vide</div>}
-      </div>
-    </div>
+    <Link to="/journal" className="card stack">
+      <div className="row"><History size={20} /><h3>Journal d'activité</h3></div>
+      <div className="small muted">Connexions, ventes, modifications de prix et de stock : qui a fait quoi, et quand.</div>
+      <span className="linkish">Ouvrir le journal →</span>
+    </Link>
   );
 }
 

@@ -65,3 +65,40 @@ export const PAY_LABEL: Record<string, string> = {
   moov: 'Moov Money',
   credit: 'À crédit',
 };
+
+/* --------- Montant en toutes lettres (« Arrêtée la présente facture à la somme de … ») --------- */
+const U = ['zéro', 'un', 'deux', 'trois', 'quatre', 'cinq', 'six', 'sept', 'huit', 'neuf', 'dix', 'onze', 'douze', 'treize', 'quatorze', 'quinze', 'seize'];
+const T: Record<number, string> = { 2: 'vingt', 3: 'trente', 4: 'quarante', 5: 'cinquante', 6: 'soixante' };
+
+function below100(n: number, final: boolean): string {
+  if (n < 17) return U[n];
+  if (n < 20) return 'dix-' + U[n - 10];
+  const t = Math.floor(n / 10), u = n % 10;
+  if (t <= 6) return u === 0 ? T[t] : u === 1 ? `${T[t]} et un` : `${T[t]}-${U[u]}`;
+  if (t === 7) return u === 1 ? 'soixante et onze' : 'soixante-' + below100(10 + u, final);
+  if (t === 8) return u === 0 ? (final ? 'quatre-vingts' : 'quatre-vingt') : 'quatre-vingt-' + U[u];
+  return 'quatre-vingt-' + below100(10 + u, final);
+}
+
+function below1000(n: number, final: boolean): string {
+  const h = Math.floor(n / 100), r = n % 100;
+  if (!h) return below100(r, final);
+  const hs = h === 1 ? 'cent' : `${U[h]} cent`;
+  if (!r) return h > 1 && final ? hs + 's' : hs;
+  return `${hs} ${below100(r, final)}`;
+}
+
+/** 94400 → « quatre-vingt-quatorze mille quatre cents » (orthographe traditionnelle). */
+export function enLettres(value: number): string {
+  let n = Math.round(Math.abs(value));
+  if (n === 0) return 'zéro';
+  const parts: string[] = [];
+  const bn = Math.floor(n / 1e9); n %= 1e9;
+  const mn = Math.floor(n / 1e6); n %= 1e6;
+  const th = Math.floor(n / 1000); n %= 1000;
+  if (bn) parts.push(`${below1000(bn, true)} milliard${bn > 1 ? 's' : ''}`);
+  if (mn) parts.push(`${below1000(mn, true)} million${mn > 1 ? 's' : ''}`);
+  if (th) parts.push(th === 1 ? 'mille' : `${below1000(th, false)} mille`);
+  if (n) parts.push(below1000(n, true));
+  return parts.join(' ');
+}

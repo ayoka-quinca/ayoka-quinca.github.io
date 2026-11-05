@@ -21,7 +21,7 @@ const PORT = Number(process.env.PORT ?? 8080);
 const TOKEN = process.env.SHOP_TOKEN ?? '';
 const DATA = process.env.DATA_DIR ?? join(here, 'data');
 const STATIC = process.env.STATIC_DIR ?? join(here, '..', 'app', 'dist');
-const TABLES = new Set(['locations', 'categories', 'products', 'movements', 'sales', 'payments', 'clients', 'suppliers', 'purchases', 'inventories', 'users', 'audit']);
+const TABLES = new Set(['locations', 'categories', 'products', 'movements', 'sales', 'payments', 'clients', 'suppliers', 'purchases', 'inventories', 'users', 'audit', 'quotes']);
 
 if (TOKEN.length < 16) {
   console.error('SHOP_TOKEN manquant ou trop court (16 caractères minimum).');

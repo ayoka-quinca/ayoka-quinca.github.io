@@ -65,7 +65,7 @@ Ordres de grandeur à confirmer auprès des fournisseurs de Cotonou.
 
 **Variante B, serveur dans le magasin** : sur un mini-PC branché à l'onduleur, installer Node.js 22, construire l'application (`npm ci && npm run build` dans `app/`) puis lancer `SHOP_TOKEN=… node server/index.mjs`, sous systemd. Les téléphones s'y connectent par le Wi-Fi local. Le HTTPS est indispensable pour le mode hors ligne : il faut un certificat local (Caddy `tls internal`) installé sur chaque appareil. C'est plus fragile, à réserver au cas où Internet serait vraiment inutilisable.
 
-**Variante C, sans serveur, pour démarrer tout de suite** : l'application peut être déposée sur n'importe quel hébergement statique gratuit (Vercel, Netlify, Cloudflare Pages) avec le dossier `app/dist`. Elle fonctionne alors **sur un seul appareil**, avec des sauvegardes manuelles. C'est utile pour la phase 1 si le VPS n'est pas encore prêt.
+**Variante C, sans serveur, pour démarrer tout de suite** : on met seulement l'application en ligne, gratuitement, chez un hébergeur de sites (Vercel, Netlify ou Cloudflare Pages) : il suffit d'y déposer le dossier `app/dist`. Chacun l'ouvre et l'installe depuis un lien, mais **chaque appareil garde ses propres données** : un téléphone et le PC ne se voient pas. C'est utile pour démarrer avec **un seul appareil** (par exemple le PC de la caisse) avant que le serveur soit prêt, avec une sauvegarde manuelle chaque semaine. Le jour où le serveur (variante A) arrive, on le renseigne dans Paramètres › Synchronisation et toutes les données partent vers lui.
 
 ### 0.3 Installer l'application sur chaque appareil
 

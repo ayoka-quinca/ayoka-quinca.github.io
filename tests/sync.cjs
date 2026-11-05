@@ -11,7 +11,7 @@ const pin = async (p, code) => { for (const d of code) await p.locator('.numpad 
   await A.getByText('Commencer avec ma boutique').click();
   await A.locator('input').nth(0).fill('Sofiatou'); await A.locator('input').nth(1).fill('1234');
   await A.getByRole('button', { name: 'Créer et entrer' }).click();
-  await A.getByText('Nouvelle vente').first().waitFor();
+  await A.locator('.hero-sell').waitFor();
   await A.goto(U + '/stock/nouveau');
   await A.locator('input').first().fill('Ciment test');
   await A.locator('.field', { hasText: 'Prix de vente' }).locator('input').fill('5000');
@@ -29,13 +29,13 @@ const pin = async (p, code) => { for (const d of code) await p.locator('.numpad 
   await B.getByText('rejoint une boutique').click();
   await B.locator('input').nth(0).fill(U); await B.locator('input').nth(1).fill(T);
   await B.getByRole('button', { name: 'Se connecter' }).click();
-  await B.getByText('Bonjour Sofiatou').waitFor({ timeout: 10000 });
+  await B.getByText('Tapez votre code secret').waitFor({ timeout: 10000 });
   await pin(B, '1234');
   await B.waitForTimeout(500);
   console.log('B db', await B.evaluate(() => new Promise(r => { const q = indexedDB.open('ayoka-quinca'); q.onsuccess = () => { const d = q.result; const t = d.transaction(['products','movements','stock','settings'],'readonly'); const a = t.objectStore('products').getAll(), m = t.objectStore('movements').getAll(), st = t.objectStore('stock').getAll(), se=t.objectStore('settings').getAll(); t.oncomplete = () => r(JSON.stringify({p:a.result.length,m:m.result.length,st:st.result,se:se.result})); }; })));
   await B.goto(U + '/vendre'); await B.waitForTimeout(800); await B.screenshot({path: OUT+'/shots/31-B.png'}); await B.locator('.ptile', { hasText: 'Ciment test' }).click();
-  await pin(B, '5'); await B.locator('.sheet .btn.primary').click();
-  await B.locator('.cartbar .btn.primary').click();
+  await pin(B, '5'); await B.locator('.sheet .btn.accent').click();
+  await B.locator('.cartbar .btn.accent').click();
   await B.getByRole('button', { name: /Valider la vente/ }).click();
   await B.getByText('Vente enregistrée').first().waitFor();
   await B.evaluate(() => new Promise(r => setTimeout(r, 300)));

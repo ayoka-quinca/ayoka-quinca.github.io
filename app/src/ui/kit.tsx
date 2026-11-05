@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Delete, Search as SearchIcon, X, type LucideIcon } from 'lucide-react';
+import { ChevronLeft, Delete, Search as SearchIcon, X, type LucideIcon } from 'lucide-react';
 import type { Location } from '../db';
 import { money, qty as fq } from '../domain/format';
 
@@ -47,7 +47,7 @@ export function Sheet({ title, onClose, children, wide }: { title: ReactNode; on
         <div className="grab" />
         <div className="sheet-head">
           <h2>{title}</h2>
-          <button className="iconbtn" onClick={onClose} aria-label="Fermer"><X size={24} /></button>
+          <button className="iconbtn" style={{ background: 'var(--surface-2)', width: 36, height: 36 }} onClick={onClose} aria-label="Fermer"><X size={18} /></button>
         </div>
         {children}
       </div>
@@ -73,10 +73,10 @@ export function Confirm({ title, text, confirm = 'Confirmer', danger, onYes, onC
 export function TopBar({ title, back, right }: { title: ReactNode; back?: boolean | string; right?: ReactNode }) {
   const nav = useNavigate();
   return (
-    <header className="topbar">
+    <header className={`topbar ${back ? 'back' : ''}`}>
       {back && (
         <button className="iconbtn" aria-label="Retour" onClick={() => (typeof back === 'string' ? nav(back) : nav(-1))}>
-          <ArrowLeft size={24} />
+          <ChevronLeft size={26} />
         </button>
       )}
       <h1>{title}</h1>
@@ -90,7 +90,7 @@ export function SearchBox({ value, onChange, placeholder, autoFocus }: { value: 
   const ref = useRef<HTMLInputElement>(null);
   return (
     <div className="search">
-      <SearchIcon size={22} />
+      <SearchIcon size={20} />
       <input ref={ref} className="input" type="search" inputMode="search" value={value} placeholder={placeholder}
         autoFocus={autoFocus} onChange={(e) => onChange(e.target.value)} aria-label={placeholder} />
       {value && (
@@ -148,24 +148,22 @@ export function ZoneTag({ loc, locs }: { loc?: Location; locs?: Map<string, Loca
 
 export function StockBadge({ q, min, unit }: { q: number; min: number; unit?: string }) {
   if (q <= 0) return <span className="badge danger">Épuisé</span>;
-  if (q <= min) return <span className="badge warn">Stock bas · {fq(q)} {unit}</span>;
-  return <span className="badge ok">{fq(q)} {unit}</span>;
+  if (q <= min) return <span className="badge warn">Bientôt fini · {fq(q)}</span>;
+  return <span className="badge neutral num">{fq(q)} {unit}</span>;
 }
 
 export function Empty({ icon: Icon, title, text, children }: { icon: LucideIcon; title: string; text?: string; children?: ReactNode }) {
   return (
     <div className="empty">
-      <Icon size={40} strokeWidth={1.5} />
-      <h3 style={{ color: 'var(--ink-2)' }}>{title}</h3>
-      {text && <p className="small">{text}</p>}
+      <span className="glyph lg"><Icon size={26} strokeWidth={1.8} /></span>
+      <h3 style={{ color: 'var(--ink)' }}>{title}</h3>
+      {text && <p className="small" style={{ maxWidth: 320 }}>{text}</p>}
       {children}
     </div>
   );
 }
 
-export function Avatar({ name, color, lg }: { name: string; color: string; lg?: boolean }) {
-  return <span className={`avatar ${lg ? 'lg' : ''}`} style={{ background: color }}>{name.trim().charAt(0).toUpperCase()}</span>;
-}
+export { Avatar } from './Brand';
 
 export function Field({ label, hint, children }: { label: string; hint?: string; children: ReactNode }) {
   return (

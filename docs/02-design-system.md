@@ -1,121 +1,90 @@
-# 2. Design system « Comptoir »
+# 2. Design system « Comptoir », version 2
 
-Un design system n'a de valeur que s'il sert **une personne précise dans une situation précise**. On commence donc par elle.
+La version 1 était lisible mais trop dense : trop de bordures, trop d'informations par écran, des polices système sans caractère. La version 2 garde la même base d'accessibilité et change de niveau de finition.
 
-## 2.1 Pour qui ?
+**Inspirations** : les principes d'Apple (*Human Interface Guidelines* : clarté, profondeur, le contenu d'abord) et les sites primés sur Awwwards (typographie expressive, blancs généreux, un seul accent). Elle reste pensée pour les mêmes personnes : une responsable d'une quarantaine d'années, une caissière, un vendeur, sur un Android d'entrée de gamme, souvent en plein jour.
 
-**Persona principal : Mme Sofiatou, 40-50 ans, responsable de la boutique**
-- Smartphone Android, utilise WhatsApp, Mobile Money et Facebook au quotidien. N'a jamais utilisé de logiciel de gestion.
-- Connaît son magasin par cœur, raisonne en « sacs », « barres » et « feuilles », et compte en francs CFA sans centimes.
-- Négocie les prix, fait crédit aux clients fidèles et note tout dans des cahiers.
-- Commence à avoir besoin de lunettes de lecture. Travaille parfois en plein soleil ou dans un entrepôt mal éclairé.
+## 2.1 Les 6 règles
 
-**Personas secondaires** : la **caissière** (rapidité, monnaie juste, pas d'erreur) et le **vendeur** (retrouver les produits, préparer, compter), qui sera peut-être un nouvel employé ne connaissant pas encore le magasin (§4.6 du CDC).
-
-**Situation type** : un client est au comptoir, pressé, et demande « 20 sacs de ciment et 50 barres de 10 ». Il négocie. Il paie une partie en espèces et le reste « à la fin du mois ». La vente doit être faite en **moins de 30 secondes**.
-
-## 2.2 Les 8 principes
-
-| # | Principe | Concrètement dans l'application |
+| # | Règle | Ce que ça change à l'écran |
 |---|---|---|
-| 1 | **Gros et lisible** | Texte de base 17 px (au lieu de 14-16 px habituellement), montants en 24-35 px très gras, réglage A / A+ / A++ |
-| 2 | **Toujours un mot à côté de l'icône** | Jamais d'icône seule pour une action. « Encaisser », « Déplacer », « Corriger » |
-| 3 | **Le vocabulaire de la boutique, pas celui de l'informatique** | « Les clients me doivent », « Épuisé », « À commander », « Il paie maintenant », « Réception de marchandise », « C'est juste » |
-| 4 | **Deux gestes par article** | Toucher le produit, puis toucher la quantité (raccourcis 5 / 10 / 20 / 50 adaptés à l'unité) → Ajouter |
-| 5 | **Le pavé numérique plutôt que le clavier** | Quantités, prix négociés, montants reçus et codes PIN se tapent sur un pavé géant (touches de 58 px), comme sur une calculatrice |
-| 6 | **On ne bloque pas, on prévient** | Vendre plus que le stock affiché est permis avec un avertissement. Le système s'adapte au magasin, pas l'inverse |
-| 7 | **Annuler plutôt que confirmer** | Retirer un article ou vider le panier se fait tout de suite, avec un bouton « Annuler » pendant 5 s. Les confirmations sont réservées à ce qui est grave (annuler une vente, restaurer, tout effacer) |
-| 8 | **La couleur a un sens, toujours le même** | Vert = argent reçu / valider. Ambre = attention. Rouge = manque, dette, suppression. Chaque zone du magasin a SA couleur, partout |
+| 1 | **Un écran = une intention** | L'accueil ne montre plus que 4 blocs : le bouton Vendre, le chiffre du jour, 3 raccourcis, « À surveiller ». Le détail est un geste plus loin |
+| 2 | **De l'air partout** | Marges de 20 à 24 px, cartes de 20 px, lignes de liste de 68 px, pas de bordure épaisse : ce sont l'ombre douce et l'espace qui séparent |
+| 3 | **Deux polices, deux rôles** | *Plus Jakarta Sans* pour tout ce qu'on lit et touche. *Instrument Serif* (italique orange) seulement pour les grands titres d'accueil : une touche éditoriale, jamais pour lire un chiffre |
+| 4 | **Un seul accent** | L'**orange Ayoka** (le chantier, l'outil) signale l'action principale : Vendre, Encaisser, Ajouter. Le **noir graphite** porte les autres actions. Vert, ambre et rouge ne parlent que d'état |
+| 5 | **On reconnaît avant de lire** | Chaque produit a un pictogramme de sa catégorie (sac, fer, carreau, prise, cadenas…) teinté de la couleur de sa zone |
+| 6 | **Toujours accessible** | Texte de base 17 px (réglable A / A+ / A++), cibles ≥ 48 px, contraste AA minimum, AAA sur les montants, mode sombre complet |
 
-## 2.3 Les couleurs (tokens)
+## 2.2 Identité
 
-Fond **papier chaud** `#F7F4EE` plutôt que blanc pur : il éblouit moins au soleil et rappelle le cahier, ce qui rend l'outil familier. Les cartes restent blanches pour ressortir.
+**Logo** : un « A » dessiné comme une ferme de toit (deux chevrons), traversé par une poutre orange, sur un carré graphite aux angles adoucis, comme une icône d'application. On y lit à la fois la lettre, le bâtiment et l'outil. Fichier : `app/public/icon.svg`, composant `LogoMark` dans `app/src/ui/Brand.tsx`.
 
-| Token | Clair | Sombre | Usage |
+**Signature** : « AYOKA QUINCA » en capitales espacées, avec la ligne « Quincaillerie · Sèmè-Podji ».
+
+**Avatars** : une silhouette par défaut, teintée de la couleur de la personne. Il n'y a ni photo à gérer ni initiale à deviner.
+
+## 2.3 Couleurs (tokens)
+
+| Token | Clair | Sombre | Rôle |
 |---|---|---|---|
-| `--paper` | #F7F4EE | #121513 | Fond de page |
-| `--surface` | #FFFFFF | #1B1F1C | Cartes, listes |
-| `--ink` | #1C1F1D | #EEF1EE | Texte principal (contraste 15:1) |
-| `--ink-3` | #6F746F | #8E968F | Texte secondaire (≥ 4,5:1) |
-| `--brand` | #0B6E4F | #2FA77C | Actions principales, argent encaissé |
-| `--warn` | #B45309 | #F0A44B | Stock bas, monnaie à rendre |
-| `--danger` | #B42318 | #F07167 | Épuisé, dettes, suppressions |
-| `--accent` | #E8A317 | — | Focus clavier, journée en cours sur les graphiques |
+| `--bg` | #F5F4F2 | #0D0D0E | Fond de page, gris neutre très légèrement chaud |
+| `--surface` | #FFFFFF | #17171A | Cartes, listes, feuilles |
+| `--surface-2` | #EFEEEB | #222226 | Champs, capsules, boutons secondaires |
+| `--ink` | #141414 | #F4F4F5 | Texte et boutons principaux |
+| `--ink-3` | #8A8782 | #86868C | Texte secondaire |
+| `--accent` | #F0601B | #FF7638 | Orange Ayoka : action principale |
+| `--accent-ink` | #B8410A | #FF9A6B | Orange lisible en texte (≥ 4,5:1) |
+| `--ok` / `--warn` / `--danger` | #12804C / #A96300 / #CF2A20 | éclaircis | États : payé / attention / manque, dette |
 
-**Couleurs des zones** (reprises sur le plan, les fiches, les tuiles de vente et les filtres) :
+Les **couleurs des zones** du magasin ne changent pas (ambre pour le hall, bleu pour le magasin principal, gris ciment, violet carrelage, brun matériaux, rouille arrière-cour). Elles teintent désormais les pictogrammes produits.
 
-| Zone | Couleur | | Zone | Couleur |
-|---|---|---|---|---|
-| Hall d'entrée | ambre `#D9920F` | | Zone carrelage | violet `#7B4FB0` |
-| Magasin principal | bleu `#2F6FB0` | | Entrepôt matériaux | brun `#8A5A2B` |
-| Entrepôt ciment | gris ciment `#5B6472` | | Arrière-cour (fers) | rouille `#C2410C` |
-| Espace caisse | vert `#0B6E4F` | | | |
+## 2.4 Typographie
 
-Au bout de quelques jours, « le trait violet » veut dire « c'est au carrelage » : l'employé n'a plus besoin de lire.
-
-Un mode sombre suit le réglage du téléphone, pour l'usage le soir et l'économie de batterie sur les écrans OLED.
-
-## 2.4 Typographie et dimensions
-
-- **Police système** (Roboto sur Android, Segoe UI sur Windows) : aucun téléchargement, rendu net, chiffres tabulaires pour que les montants restent alignés.
-- Échelle : 17 px (texte) · 19,5 px (titre de section) · 20 à 25 px (titre de page) · 27 px (montant) · 37 px (total à payer), tout est multiplié par 1,12 en A+ et 1,24 en A++.
-- **Cibles tactiles** : 48 px minimum, 56 px pour les actions principales, 64 px pour le bouton central « Vendre ».
-- Espacements : grille de 4 px (8 / 12 / 16 / 20 / 24). Rayons : 10 / 14 / 20 px.
-- Montants : `12 500 F` dans l'application, `12 500 FCFA` sur les factures, sans décimales.
-
-## 2.5 Composants
-
-| Composant | Rôle | Règles |
+| Usage | Police | Taille / graisse |
 |---|---|---|
-| **Tuile d'action** | Accueil : Nouvelle vente, Trouver un produit, Encaisser un crédit, Réception | 4 au maximum, la première en vert plein |
-| **Tuile produit** | Écran Vendre | Nom en gras, dimension, prix / unité, « Reste N », liseré de la couleur de zone, pastille verte avec la quantité déjà dans le panier |
-| **Feuille (sheet)** | Toute saisie secondaire | Monte du bas sur téléphone (zone du pouce), fenêtre centrée sur ordinateur. Fermeture : croix, tap à l'extérieur, touche Échap |
-| **Pavé numérique** | Montants, quantités, PIN | Touches de 58 px. « 00 » pour les montants, effacement en bas à droite |
-| **Stepper − / +** | Ajuster une quantité | Champ central modifiable au toucher |
-| **Badge de stock** | Partout | Vert « 120 pièce » · Ambre « Stock bas · 3 » · Rouge « Épuisé » |
-| **Étiquette de zone** | Partout | Carré de couleur + « Magasin principal · Étagère A » |
-| **Toast** | Retour d'action | En bas, 2,6 s, ou 5 s avec bouton « Annuler » |
-| **Bandeau** | Information persistante | Hors ligne, mode démonstration, écart d'inventaire |
-| **Barre panier** | Vente sur téléphone | Flottante, sombre, total en grand et bouton « Encaisser » |
+| Grand titre d'accueil | Instrument Serif | 40 à 70 px, regular, mot clé en *italique orange* |
+| Titre de page | Plus Jakarta Sans | 24 à 30 px, 750, interlettrage −0,025 em |
+| Montant principal | Plus Jakarta Sans | 44 px, 750, chiffres tabulaires |
+| Texte | Plus Jakarta Sans | 17 px, 450 |
+| Sur-titre (« AUJOURD'HUI ») | Plus Jakarta Sans | 13 px, 700, capitales espacées |
 
-## 2.6 Navigation
+Les polices sont **embarquées dans l'application** (paquets `@fontsource`) : elles s'affichent aussi hors ligne et ne dépendent d'aucun serveur externe.
 
-- **Téléphone** : barre du bas à 5 entrées : Accueil · Stock · **Vendre** (bouton central surélevé) · Clients · Plus. Sur le téléphone d'un vendeur sans droit de caisse, « Clients » devient « Inventaire ».
-- **Ordinateur** (≥ 960 px) : menu latéral complet, tableaux, panier toujours visible à droite de l'écran de vente.
-- Retour en haut à gauche, titre de la page au centre de l'attention, action principale en haut à droite.
+## 2.5 Composants revus
 
-## 2.7 Parcours clés et nombre de gestes
-
-| Parcours | Gestes | Détail |
+| Composant | V1 | V2 |
 |---|---|---|
-| Vente simple au comptant, 1 article | 5 | Vendre → produit → Ajouter → Encaisser → Valider (+1 geste pour choisir la quantité) |
-| Vente « 20 sacs + 50 barres » à crédit avec avance | 13 | dont 3 pour l'avance et 2 pour choisir le client |
-| Savoir où est un produit | 2 + saisie | Accueil → Trouver un produit → fiche avec plan surligné |
-| Enregistrer un remboursement de crédit | 4 | Clients → client → Il paie maintenant → « Tout » → Enregistrer |
-| Compter une zone sans écart | 1 par produit | « C'est juste (64) » |
+| Barre de navigation (téléphone) | Barre pleine largeur collée en bas | **Capsule flottante translucide**. L'onglet actif est sur fond doux, « Vendre » est une pastille orange |
+| Menu (ordinateur) | Liste unique de 11 entrées | Bouton orange « Nouvelle vente » puis 3 groupes : *Au quotidien*, *Magasin*, *Pilotage* |
+| Filtres du stock | Rangée de 9 capsules qui défilait | **Contrôle segmenté** (Tous / Stock bas / Épuisés) + 2 boutons « Zone » et « Catégorie » qui ouvrent un choix |
+| Capsules de catégories | Bordure, fond blanc | Sans bordure, fond doux, **fondu sur le bord** pour indiquer qu'on peut faire défiler |
+| Tuile produit | Liseré coloré, beaucoup de texte | Pictogramme, nom, prix en grand, « 46 en stock » |
+| Saisie de montant | Champ encadré | **Grand chiffre souligné**, comme sur un reçu |
+| Feuilles | Bord bas, ombre forte | Coins de 28 px, flou d'arrière-plan, animation douce |
+| Boutons | Rectangles à bordure | **Pilules** pleines : orange (action principale), graphite (validation), gris doux (secondaire) |
 
-## 2.8 Accessibilité et confort
+## 2.6 Écrans clés
 
-- Contraste AA partout, AAA pour les montants.
-- Focus clavier visible (contour ambre de 3 px) pour l'usage au PC.
-- `aria-label` sur tous les boutons d'icône, `role="dialog"` sur les feuilles, annonces `aria-live` pour les toasts.
-- Recherche **tolérante** : sans accents, sans majuscules, mots dans n'importe quel ordre (« fer 10 » trouve « Fer à béton 10 mm »).
-- Pas d'animation superflue : seulement l'apparition des feuilles (200 ms) et la secousse en cas de code faux.
+- **Bienvenue** : « Fini les cahiers. *Votre boutique*, en un coup d'œil. » Quatre promesses simples (vendre en deux gestes, savoir où est chaque produit, suivre qui vous doit quoi, rien ne se perd). Sur ordinateur, un panneau sombre montre le vrai plan du magasin.
+- **Qui travaille ?** : de grandes cartes avec avatar, puis le code sur un pavé numérique.
+- **Accueil** : salutation, bouton Vendre, carte sombre « Aujourd'hui » avec les 7 derniers jours, 3 raccourcis, « À surveiller ». Pour une boutique vide, une liste « Pour bien démarrer » en 3 étapes.
 
-## 2.9 Règles de rédaction
+## 2.7 Mouvement
 
-- Tutoiement : non. Vouvoiement simple et chaleureux : « Tapez votre code secret ».
-- Phrases courtes, verbe d'action en premier : « Valider la vente », « Déplacer 5 sac ».
-- Dire ce qui va se passer, surtout pour l'argent : « C'est plus que la dette : 2 000 F sera gardé en avoir. »
-- Jamais de message d'erreur technique à l'écran.
+- Les pages glissent de 10 px en 0,4 s. Le contenu n'est **jamais invisible** pendant l'animation.
+- Les feuilles montent en 0,32 s avec une courbe douce. Les boutons se compriment légèrement au toucher.
+- Tout s'arrête si le téléphone demande moins d'animations (`prefers-reduced-motion`).
 
-## 2.10 Liste de contrôle pour tout nouvel écran
+## 2.8 Vocabulaire
 
-- [ ] L'action principale est-elle évidente, en vert, à portée de pouce ?
-- [ ] Chaque icône a-t-elle son mot ?
-- [ ] Les nombres se saisissent-ils au pavé numérique ?
-- [ ] Le texte reste-t-il lisible en A++ sans casser la mise en page ?
-- [ ] L'écran fonctionne-t-il sans Internet ?
-- [ ] Une erreur de manipulation peut-elle être annulée ?
-- [ ] La couleur de zone est-elle visible quand un produit est affiché ?
-- [ ] Testé sur un téléphone 360 px de large et sur un PC 1366 px ?
+On garde les mots de la boutique : « Les clients me doivent », « Il paie maintenant », « Le client achète », « Bientôt fini », « Stock bas », « C'est juste », « Réception ». Jamais de jargon informatique.
+
+## 2.9 Liste de contrôle pour tout nouvel écran
+
+- [ ] Une seule action principale, en orange, à portée de pouce.
+- [ ] Moins de 5 blocs visibles sans faire défiler.
+- [ ] Chaque icône a son mot.
+- [ ] Les nombres se saisissent au pavé numérique et s'affichent en grand.
+- [ ] Lisible en A++ et en mode sombre.
+- [ ] Fonctionne sans Internet.
+- [ ] Testé à 360 px et à 1366 px de large.
